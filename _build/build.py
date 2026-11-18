@@ -5,7 +5,7 @@ Usage : python _build/build.py
 Chaque version suit la forme et le texte de la maquette des frères ; seules couleurs, polices,
 en-tête et petites variations de mise en page changent (classes sur <body> + theme.css).
 """
-import html, os, re, shutil, sys
+import html, json, os, re, shutil, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from content import *  # noqa
 import content_en as EN
@@ -646,7 +646,7 @@ MENU_LABEL = {"mega": "Menu des consignes + rubrique « L’abbaye »", "utility
 # Destinataire du courriel préparé par « Envoyer mes remarques » (vide : seul le fichier est téléchargé)
 REVIEW_EMAIL = ""
 # Adresse de l'application Web Google Apps Script (_build/google-apps-script.gs) : remarques partagées en ligne
-REVIEW_ENDPOINT = ""
+REVIEW_ENDPOINT = "https://script.google.com/macros/s/AKfycbyyz0rJNnj8nXJaCfWtXvzXwDhnYf72NvwK5JnJURjYThUWoz17hJ59n1WgfeZoBYOn/exec"
 
 
 def review_tags(prefix):
@@ -655,14 +655,10 @@ def review_tags(prefix):
 
 
 def chooser():
-    if REVIEW_ENDPOINT:
-        HOWTO_END = ("<li>C’est tout : vos remarques sont enregistrées aussitôt, signées de votre prénom.</li></ol>\n"
-                     "<p class=\"small\">Chaque frère voit les remarques des autres (pastilles sur la page, liste sous <b>☰</b>). "
-                     "Le bouton <b>◉</b> masque ou affiche les remarques.</p>")
-    else:
-        HOWTO_END = ("<li>Une fois terminé, cliquez sur <b>☰</b> puis <b>Envoyer les remarques</b> : un fichier est enregistré dans vos Téléchargements.</li></ol>\n"
-                     "<p class=\"small\">Ce fichier peut passer de frère en frère : chacun l’ouvre (<b>☰</b> › « Ouvrir un fichier de remarques reçu »), "
-                     "voit les remarques des autres, ajoute les siennes et le transmet. Le bouton <b>◉</b> masque ou affiche les remarques.</p>")
+    HOWTO_END = ("<li>C’est tout : vos remarques s’enregistrent aussitôt dans le site, signées de votre prénom.</li></ol>\n"
+                 "<p class=\"small\">Chaque frère voit les remarques des autres (pastilles sur la page, liste sous <b>☰</b>). "
+                 "Le bouton <b>◉</b> masque ou affiche les remarques. "
+                 "<a href=\"remarques.html\">Voir toutes les remarques, par version et par page →</a></p>")
     cards = "".join(
         f'<a class="card" href="{t["folder"]}/index.html" target="_blank" rel="noopener"><div class="thumb" style="background-image:url(assets/img/{THUMBS[t["folder"]]}.jpg)"></div>'
         f'<div class="body"><span class="n">Version {i}</span><h2>{t["name"]}</h2><p>{html.escape(t["desc"])}</p>'
@@ -697,6 +693,75 @@ footer{{padding-top:2rem;padding-bottom:4rem;border-top:1px solid var(--line);co
 </body></html>
 """
     open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8").write(s)
+    remarques_page()
+
+
+def remarques_page():
+    """Page « Toutes les remarques » : lecture du recueil en ligne, classée par version puis par page."""
+    pages = {"index.html": "Accueil", "index-en.html": "Accueil (anglais)", "ecrire.html": "Nous écrire"}
+    pages.update({k + ".html": PAGES[k]["title"] for k in PAGE_ORDER})
+    cfg = {"endpoint": REVIEW_ENDPOINT,
+           "order": ["choix"] + [t["folder"] for t in THEMES],
+           "versions": {t["folder"]: f"Version {i} · {t['name']}" for i, t in enumerate(THEMES, 1)},
+           "pages": pages,
+           "pageOrder": ["index.html"] + [k + ".html" for k in PAGE_ORDER] + ["ecrire.html", "index-en.html"]}
+    cfg_json = json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")
+    s = f"""<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toutes les remarques — maquettes de Sept-Fons</title><link rel="icon" href="assets/favicon.png">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{{--bg:#f5f2eb;--ink:#1f1c18;--ink-2:#655d52;--line:#ddd5c7;--accent:#8a6a3b;--like:#2f7d4f;--dis:#b23a3a;--note:#6b655c}}
+*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.55 Inter,system-ui,sans-serif}}
+.wrap{{max-width:64rem;margin:0 auto;padding:2.5rem 1.25rem 5rem}}
+.back{{color:var(--ink-2);font-size:.9rem;text-decoration:none}}.back:hover{{color:var(--ink)}}
+h1{{font:400 clamp(2rem,1.4rem + 2.4vw,3rem)/1.1 "Cormorant Garamond",serif;margin:.6rem 0 .4rem}}
+.meta{{color:var(--ink-2);font-size:.9rem;display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:center;margin-bottom:1.6rem}}
+button{{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:999px;padding:.35rem .9rem;color:var(--ink)}}button:hover{{border-color:var(--ink)}}
+table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);font-size:.92rem;margin-bottom:2rem}}
+th,td{{padding:.55rem .8rem;border-bottom:1px solid var(--line);text-align:left}}td{{font-variant-numeric:tabular-nums}}
+thead th{{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);font-weight:600}}
+tbody th{{font-weight:500}}tbody th a{{color:inherit}}tr.none{{color:#aaa49a}}
+.summary-wrap{{overflow-x:auto}}
+.filters{{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1.5rem;position:sticky;top:0;background:var(--bg);padding:.7rem 0;z-index:2;border-bottom:1px solid var(--line)}}
+select,input{{font:inherit;padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);min-width:0}}
+input{{flex:1 1 12rem}}
+#count{{align-self:center;color:var(--ink-2);font-size:.9rem;margin-left:auto}}
+.version{{margin:2.4rem 0 0}}
+.version h2{{font:500 1.8rem/1.2 "Cormorant Garamond",serif;margin:0 0 .4rem;padding-bottom:.4rem;border-bottom:2px solid var(--ink);display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;align-items:baseline}}
+.version h3{{font-size:1rem;font-weight:600;margin:1.4rem 0 .6rem;display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem}}
+.version h3 a{{color:var(--ink)}}
+.tally{{display:inline-flex;gap:.7rem;font:400 .85rem Inter,system-ui,sans-serif;color:var(--ink-2)}}
+.items{{list-style:none;margin:0;padding:0;display:grid;gap:.6rem}}
+.it{{background:#fff;border:1px solid var(--line);border-left:4px solid var(--note);border-radius:6px;padding:.8rem 1rem}}
+.it.like{{border-left-color:var(--like)}}.it.dislike{{border-left-color:var(--dis)}}
+.ih{{display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:baseline;font-size:.9rem}}
+.verdict{{font-weight:600}}.who{{font-weight:500}}.when{{color:var(--ink-2);font-size:.82rem}}
+.el{{color:var(--ink-2);font-size:.88rem;margin-top:.2rem}}
+.txt{{margin:.45rem 0 0;white-space:pre-wrap}}
+.see{{display:inline-block;margin-top:.4rem;font-size:.85rem;color:var(--accent)}}
+.empty{{color:var(--ink-2);padding:2rem 0}}
+</style></head><body>
+<div class="wrap">
+<a class="back" href="index.html">← Les huit versions</a>
+<h1>Toutes les remarques</h1>
+<div class="meta"><span id="status">Chargement…</span><button type="button" id="refresh">Actualiser</button><button type="button" id="csv">Exporter vers un tableur</button></div>
+<div class="summary-wrap" id="summary"></div>
+<div class="filters" role="search">
+<select id="f-version" aria-label="Version"></select>
+<select id="f-verdict" aria-label="Avis"><option value="">Tous les avis</option><option value="like">👍 J’aime</option><option value="dislike">👎 Je n’aime pas</option><option value="note">💬 Remarque seule</option></select>
+<select id="f-auteur" aria-label="Frère"></select>
+<input id="f-q" type="search" placeholder="Rechercher dans les remarques" aria-label="Rechercher">
+<span id="count"></span>
+</div>
+<div id="list"></div>
+</div>
+<script type="application/json" id="rv-config">{cfg_json}</script>
+<script src="assets/js/remarques.js?v={ASSET_V}" defer></script>
+</body></html>
+"""
+    open(os.path.join(ROOT, "remarques.html"), "w", encoding="utf-8").write(s)
 
 
 if __name__ == "__main__":

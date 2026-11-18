@@ -1,11 +1,10 @@
 /* Remarques des frères : cliquer un élément pour dire « j'aime », « je n'aime pas » et laisser une remarque.
-   En ligne (data-endpoint renseigné) : les remarques sont enregistrées dans un Google Sheet et partagées entre les frères.
-   Sinon : elles restent dans ce navigateur (localStorage) et « Envoyer les remarques » produit un fichier. */
+   Les remarques sont enregistrées dans le recueil en ligne (Google Sheet, data-endpoint) et partagées entre les frères ;
+   ce navigateur garde une copie et une file d'envoi (localStorage). */
 (function () {
   'use strict';
   var KEY = 'septfons-remarques-v1';
   var script = document.currentScript || document.querySelector('script[src*="review.js"]');
-  var EMAIL = (script && script.getAttribute('data-email')) || '';
   /* En ligne : adresse de l'application Google Apps Script qui enregistre les remarques dans un Google Sheet */
   var ENDPOINT = (script && script.getAttribute('data-endpoint')) || '';
   var ONLINE = !!ENDPOINT;
@@ -38,7 +37,7 @@
 
   /* ---------- en ligne : envoi des remarques et lecture de celles des autres ---------- */
   var net = { busy: false, ok: null, last: 0 };
-  function queue(op) { if (!ONLINE) return; S.queue.push(op); flush(); }
+  function queue(op) { S.queue.push(op); flush(); }   // sans adresse : gardées, envoyées dès la mise en ligne
   function flush() {
     if (!ONLINE || net.busy || !S.queue.length) return;
     net.busy = true;
@@ -62,9 +61,16 @@
           if (S.name && c.auteur === S.name) { S.items.push(c); return; }   // ses remarques laissées sur un autre appareil
           c.imported = true; others.push(c);
         });
-        S.imported = others; net.ok = true; net.last = Date.now(); save();
+        S.imported = others; net.ok = true; net.last = Date.now(); save(); seek();
       })
       .catch(function () { net.ok = false; render(); });
+  }
+
+  var wanted = '';
+  function seek() {
+    if (!wanted) return;
+    var c = all().filter(function (x) { return x.id === wanted; })[0];
+    if (c) { wanted = ''; S.hidden = false; goto(c, true); }
   }
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -230,7 +236,7 @@
           }
           S.items.forEach(function (c) { if (!c.auteur) c.auteur = S.name; });
           S.hidden = false; closeBubble(); save();
-          flashTip(ONLINE ? 'Remarque enregistrée. Les autres frères la voient.' : 'Remarque enregistrée. Elle reste dans ce navigateur jusqu’à l’envoi.');
+          flashTip(ONLINE ? 'Remarque enregistrée. Les autres frères la voient.' : 'Remarque enregistrée.');
         } })
       ]);
       b.appendChild(act);
@@ -283,11 +289,11 @@
     var open = force != null ? force : panel.hidden;
     panel.hidden = !open; if (open) { closeBubble(); renderPanel(); if (ONLINE && Date.now() - net.last > 5000) pull(); }
   }
-  function goto(c) {
+  function goto(c, instant) {
     if (c.path === HERE) {
       togglePanel(false);
       var el = find(c.selecteur);
-      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); S.hidden = false; save(); setTimeout(function () { frame(hover, el); hover.classList.add('rv-flash'); setTimeout(function () { hover.style.display = 'none'; hover.classList.remove('rv-flash'); }, 1600); }, 500); }
+      if (el) { el.scrollIntoView({ behavior: instant ? 'auto' : 'smooth', block: 'center' }); S.hidden = false; save(); setTimeout(function () { frame(hover, el); hover.classList.add('rv-flash'); setTimeout(function () { hover.style.display = 'none'; hover.classList.remove('rv-flash'); }, 1600); }, 500); }
       return;
     }
     location.href = ROOT + c.path + '#rv=' + c.id;
@@ -331,69 +337,17 @@
     });
     if (!shown.length) ul.appendChild(h('li', { class: 'rv-empty', text: filter === 'page' ? 'Aucune remarque sur cette page. Cliquez « ✎ Commenter », puis sur un élément.' : 'Aucune remarque pour l’instant.' }));
     panel.appendChild(ul);
-    if (ONLINE) {
-      var st = S.queue.length ? '⏳ ' + S.queue.length + ' remarque(s) en cours d’envoi' + (net.ok === false ? ' : connexion impossible, nouvel essai dans un instant.' : '…')
-        : (net.ok === false ? '⚠ Connexion impossible : vos remarques sont gardées et partiront dès que possible.' : '✓ Vos remarques sont enregistrées en ligne. Tous les frères les voient.');
-      panel.appendChild(h('div', { class: 'rv-pf' }, [
-        h('p', { class: 'rv-status' + (net.ok === false ? ' rv-warn' : ''), text: st }),
-        h('div', { class: 'rv-pm' }, [
-          h('button', { type: 'button', class: 'rv-link', text: 'Actualiser', onclick: pull }),
-          h('button', { type: 'button', class: 'rv-link', text: 'Télécharger toutes les remarques', onclick: exportAll }),
-          S.name ? h('button', { type: 'button', class: 'rv-link', text: 'Changer de prénom', onclick: function () { var n = prompt('Votre prénom', S.name); if (n && n.trim()) { S.name = n.trim(); save(); } } }) : null
-        ])
-      ]));
-      return;
-    }
-    var fileIn = h('input', { type: 'file', accept: '.json,application/json', multiple: '', hidden: '', onchange: function () { importFiles(fileIn.files); } });
+    var st = !ONLINE ? '⏳ Vos remarques sont gardées sur cet appareil : elles seront partagées dès la mise en ligne du recueil.'
+      : S.queue.length ? '⏳ ' + S.queue.length + ' remarque(s) en cours d’enregistrement' + (net.ok === false ? ' : connexion impossible, nouvel essai dans un instant.' : '…')
+      : (net.ok === false ? '⚠ Connexion impossible : vos remarques sont gardées et partiront dès que possible.' : '✓ Vos remarques sont enregistrées. Tous les frères les voient.');
     panel.appendChild(h('div', { class: 'rv-pf' }, [
-      h('button', { type: 'button', class: 'rv-b rv-main rv-send', text: 'Envoyer les remarques (' + (S.items.length + S.imported.length) + ')', onclick: exportAll }),
-      h('p', { class: 'rv-help', text: 'Un fichier est enregistré dans vos Téléchargements. Il contient vos remarques et celles des frères que vous avez importées : transmettez-le au frère suivant ou renvoyez-le' + (EMAIL ? ' (un courriel s’ouvre, joignez-y le fichier).' : ' par courriel.') }),
+      h('p', { class: 'rv-status' + (net.ok === false || !ONLINE ? ' rv-warn' : ''), text: st }),
+      h('a', { class: 'rv-b rv-main rv-send', href: ROOT + 'remarques.html', text: 'Toutes les remarques, par version et par page' }),
       h('div', { class: 'rv-pm' }, [
-        h('button', { type: 'button', class: 'rv-link', text: 'Ouvrir un fichier de remarques reçu…', onclick: function () { fileIn.click(); } }),
-        fileIn,
-        S.items.length || S.imported.length ? h('button', { type: 'button', class: 'rv-link rv-del', text: 'Tout effacer', onclick: function () {
-          if (confirm('Effacer toutes les remarques de ce navigateur ? Pensez à les envoyer d’abord.')) { S.items = []; S.imported = []; save(); }
-        } }) : null,
-        S.name ? h('button', { type: 'button', class: 'rv-link', text: 'Changer de prénom', onclick: function () { var n = prompt('Votre prénom', S.name); if (n && n.trim()) { S.name = n.trim(); S.items.forEach(function (c) { c.auteur = S.name; }); save(); } } }) : null
+        ONLINE ? h('button', { type: 'button', class: 'rv-link', text: 'Actualiser', onclick: pull }) : null,
+        S.name ? h('button', { type: 'button', class: 'rv-link', text: 'Changer de prénom', onclick: function () { var n = prompt('Votre prénom', S.name); if (n && n.trim()) { S.name = n.trim(); save(); } } }) : null
       ])
     ]));
-  }
-
-  /* ---------- export / import ---------- */
-  function stamp() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-  function safe(s) { return (s || 'frere').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').toLowerCase(); }
-  function exportAll() {
-    if (!S.items.length && !S.imported.length) { alert('Il n’y a encore aucune remarque.'); return; }
-    if (!S.name && !ONLINE) askName();
-    var data = { format: 'septfons-remarques', version: 1, auteur: S.name, exporte_le: new Date().toISOString(), navigateur: navigator.userAgent, remarques: S.items.concat(S.imported).map(function (c) { var o = {}; for (var k in c) if (k !== 'imported') o[k] = c[k]; return o; }) };
-    var name = (ONLINE ? 'remarques-tous-' : 'remarques-' + safe(S.name) + '-') + stamp() + '.json';
-    var url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    var a = h('a', { href: url, download: name }); document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-    if (EMAIL && !ONLINE) {
-      var counts = { like: 0, dislike: 0, note: 0 }; S.items.forEach(function (c) { counts[c.verdict]++; });
-      var body = 'Bonjour,\n\nVoici mes remarques sur les maquettes du site (' + S.items.length + ' remarques : ' + counts.like + ' j’aime, ' + counts.dislike + ' je n’aime pas, ' + counts.note + ' remarques).\n\n' +
-        '>>> Merci de joindre à ce courriel le fichier « ' + name + ' » qui vient d’être enregistré dans vos Téléchargements. <<<\n\n' + S.name;
-      setTimeout(function () { location.href = 'mailto:' + EMAIL + '?subject=' + encodeURIComponent('Site de Sept-Fons — remarques de ' + S.name) + '&body=' + encodeURIComponent(body); }, 600);
-    }
-    flashTip('Fichier « ' + name + ' » enregistré dans vos Téléchargements.');
-  }
-  function importFiles(files) {
-    var n = 0, pending = files.length;
-    Array.prototype.forEach.call(files, function (f) {
-      var r = new FileReader();
-      r.onload = function () {
-        try {
-          var d = JSON.parse(r.result);
-          (d.remarques || []).forEach(function (c) {
-            if (S.items.some(function (x) { return x.id === c.id; }) || S.imported.some(function (x) { return x.id === c.id; })) return;
-            c.auteur = c.auteur || d.auteur; if (S.name && c.auteur === S.name) S.items.push(c); else { c.imported = true; S.imported.push(c); } n++;
-          });
-        } catch (e) { alert('Le fichier « ' + f.name + ' » n’a pas pu être lu.'); }
-        if (--pending === 0) { save(); filter = 'all'; renderPanel(); flashTip(n + ' remarque(s) importée(s).'); }
-      };
-      r.readAsText(f);
-    });
   }
 
   /* ---------- rendu ---------- */
@@ -409,11 +363,9 @@
     layout(); renderPanel();
   }
 
-  function askName() { var n = prompt('Votre prénom, pour signer vos remarques :', S.name || ''); if (n && n.trim()) { S.name = n.trim(); save(); } }
   function welcome() {
     if (S.name || document.querySelector('.rv-welcome')) return;
     var inp = h('input', { type: 'text', class: 'rv-in', placeholder: 'Votre prénom', 'aria-label': 'Votre prénom', autocomplete: 'given-name' });
-    var fileIn = h('input', { type: 'file', accept: '.json,application/json', multiple: '', hidden: '', onchange: function () { ok(); importFiles(fileIn.files); } });
     function ok() { var n = inp.value.trim(); if (!n) { inp.focus(); return false; } S.name = n; w.remove(); save(); pull(); return true; }
     var w = h('div', { class: 'rv-welcome', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Bienvenue' }, [h('form', { class: 'rv-wbox', onsubmit: function (e) { e.preventDefault(); if (ok()) flashTip('Merci ' + S.name + '. Cliquez « ✎ Commenter » pour donner votre avis.'); } }, [
       h('strong', { class: 'rv-wt', text: 'Bienvenue' }),
@@ -424,9 +376,7 @@
         h('span', { class: 'rv-sp' }),
         h('button', { type: 'submit', class: 'rv-b rv-main', text: 'Commencer' })
       ]),
-      ONLINE ? h('p', { class: 'rv-help', text: 'Vos remarques sont partagées : chaque frère voit celles des autres, signées de leur prénom.' }) :
-      h('p', { class: 'rv-help' }, ['Un frère vous a transmis un fichier de remarques ? ',
-        h('button', { type: 'button', class: 'rv-link', text: 'Ouvrez-le ici', onclick: function () { if (!inp.value.trim()) { inp.focus(); inp.placeholder = 'Votre prénom d’abord'; return; } fileIn.click(); } }), fileIn])
+      h('p', { class: 'rv-help', text: 'Vos remarques s’enregistrent dans le site : chaque frère voit celles des autres, signées de leur prénom.' })
     ])]);
     ui.appendChild(w); inp.focus();
   }
@@ -440,7 +390,7 @@
       document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - net.last > 10000) pull(); });
     }
     var m = /#rv=([\w]+)/.exec(location.hash);
-    if (m) { var c = all().filter(function (x) { return x.id === m[1]; })[0]; if (c) setTimeout(function () { history.replaceState(null, '', location.pathname + location.search); goto(c); }, 400); }
+    if (m) { wanted = m[1]; if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; history.replaceState(null, '', location.pathname + location.search); setTimeout(seek, 400); }
     try { if (sessionStorage.getItem('rv-mode')) setMode(true); } catch (e) {}
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

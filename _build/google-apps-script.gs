@@ -13,6 +13,7 @@ function sheet_() {
   var sh = ss.getSheetByName(SHEET);
   if (!sh) {
     sh = ss.insertSheet(SHEET);
+    sh.getRange(1, 1, sh.getMaxRows(), COLS.length).setNumberFormat('@');   // texte brut : pas de conversion des dates ni des identifiants
     sh.appendRow(COLS);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, COLS.length).setFontWeight('bold');
