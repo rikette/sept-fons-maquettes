@@ -1,0 +1,32 @@
+/* 7 — Silence : très épuré, gris pierre, beaucoup d'espace, sections numérotées. */
+:root{
+  --bg:#f3f3f1; --bg2:#e9e8e4; --paper:#fafaf8; --ink:#1b1b1a; --ink2:#62605b; --line:#d9d7d1;
+  --accent:#7d7468; --dark:#222220; --on-dark:#f3f3f1;
+  --hdr-bg:#f3f3f1; --hdr-line:#dcdad4;
+  --btn-bg:transparent; --btn-ink:#1b1b1a; --btn-hover:#1b1b1a;
+  --display:"Newsreader",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --brand:"IBM Plex Sans",sans-serif;
+  --brand-size:.8rem; --brand-track:.42em; --brand-weight:500;
+  --nav-size:.82rem; --nav-track:.04em;
+  --h-weight:300; --body-size:.98rem; --lh:1.85; --narrow:33rem; --hero-h:min(84vh,50rem);
+}
+.h-top{padding-top:1.6rem}
+.brand::before,.brand::after{content:"";width:1px;height:.9rem;background:currentColor;opacity:.35}
+.brand::before{margin-bottom:.5rem}.brand::after{margin-top:.5rem}
+.scrolled .brand::before,.scrolled .brand::after{display:none}
+.main-nav>ul{gap:1rem}
+.hero-title{font-weight:300;font-size:clamp(2.6rem,1.2rem + 5vw,5.4rem);line-height:1.02}
+.hero-title span+span{font-style:italic;padding-left:clamp(0rem,6vw,6rem)}
+.s{padding:clamp(5rem,12vw,10rem) 0}
+.intro .narrow>p{font-family:var(--display);font-weight:300;font-size:clamp(1.35rem,1.1rem + .9vw,1.75rem);line-height:1.5}
+.split{background:transparent}
+.split-img{margin:0 0 0 clamp(.75rem,2.5vw,2.5rem)}
+.faq-item summary{font-family:var(--body);font-size:.98rem;font-weight:500}
+.quote-band{background:var(--bg);color:var(--ink);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.quote-band p{font-weight:300;font-style:italic}
+.quote-left .quote-band blockquote{border-left-color:var(--ink)}
+.more{font-style:normal;font-size:.9rem}
+.btn{border:1px solid var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.22em}
+.btn:hover{color:var(--bg)}
+.vocation{background:var(--bg2)}
+.kicker,.f-title,.mega-title{color:var(--ink2)}
+.mega a{font-weight:300}

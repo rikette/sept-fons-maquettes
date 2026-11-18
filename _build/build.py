@@ -1,0 +1,677 @@
+# -*- coding: utf-8 -*-
+"""Génère les sept versions du site à partir de content.py (texte) et themes (mise en forme).
+
+Usage : python _build/build.py
+Chaque version suit la forme et le texte de la maquette des frères ; seules couleurs, polices,
+en-tête et petites variations de mise en page changent (classes sur <body> + theme.css).
+"""
+import html, os, re, shutil, sys
+sys.path.insert(0, os.path.dirname(__file__))
+from content import *  # noqa
+import content_en as EN
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IMG = "../assets/img/"
+
+# ------------------------------------------------------------------ les sept thèmes
+# menu : "mega" (rubrique « L'abbaye » qui ouvre un panneau), "utility" (barre discrète au-dessus), "simple" (consignes seules)
+THEMES = [
+    dict(folder="1-maquette-des-freres", name="La maquette des frères", menu="maquette", tagline=False, color="#f7f4ee",
+         fonts="family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400",
+         cls="maquette", desc="La première version, telle qu’elle était : application fidèle des consignes, avec le formulaire et le choix de la langue en plus."),
+    dict(folder="2-sept-fons", name="Sept-Fons", menu="utility", tagline=False, color="#ffffff",
+         fonts="family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;500;600",
+         cls="light hero-center faq-plus page-banner quote-center",
+         desc="Dans la continuité du site actuel : Playfair, noir, blanc et un rouge liturgique."),
+    dict(folder="3-noir-et-blanc", name="Noir et blanc", menu="drawer", tagline=True, color="#ffffff",
+         fonts="family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600",
+         cls="light hero-center hero-inset faq-plus page-plain quote-center",
+         desc="Le blanc et le noir de l’habit, rien d’autre. Sous-titre « Abbaye cistercienne fondée en 1132 »."),
+    dict(folder="4-nocturne", name="Nocturne", menu="mega", tagline=False, color="#0f0e0c",
+         fonts="family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Spectral:ital,wght@0,300;0,400;1,300",
+         cls="dark dawn numerals anim hero-center faq-chevron page-banner quote-center",
+         desc="De la nuit de l’office à la lumière du jour. Menu « L’abbaye » qui ouvre un panneau."),
+    dict(folder="5-matines", name="Matines", menu="drawer", tagline=False, color="#eef1f3",
+         fonts="family=Marcellus&family=Lora:ital,wght@0,400;0,500;1,400",
+         cls="light hero-center faq-circle page-banner quote-left",
+         desc="La lumière froide du petit matin."),
+    dict(folder="6-terre", name="Terre", menu="mega", tagline=False, color="#f4f2ea",
+         fonts="family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,300&family=Work+Sans:wght@400;500;600",
+         cls="light hero-left hero-inset faq-circle page-plain quote-left journee-stagger",
+         desc="Le travail bien fait, les champs, le vert olive. Titres alignés à gauche."),
+    dict(folder="7-ivoire", name="Ivoire", menu="utility", tagline=False, color="#f7f4ee",
+         fonts="family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400",
+         cls="light hero-center faq-plus page-plain quote-center",
+         desc="La maquette des frères au plus près : fond clair, Garamond, barre discrète d’accès direct."),
+    dict(folder="8-silence", name="Silence", menu="drawer", tagline=False, color="#f3f3f1",
+         fonts="family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=IBM+Plex+Sans:wght@400;500",
+         cls="light numerals anim hero-left hero-inset faq-chevron page-plain quote-left",
+         desc="Très épuré, gris pierre, beaucoup d’espace. Sections numérotées."),
+]
+
+
+# ------------------------------------------------------------------ helpers
+def inl(t):
+    t = html.escape(t, quote=False)
+    def lk(m):
+        attrs = ' target="_blank" rel="noopener"' if m.group(2).startswith("http") else ""
+        return f'<a href="{m.group(2)}"{attrs}>{m.group(1)}</a>'
+    t = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", lk, t)
+    t = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", t)
+    # Typographie française : espaces insécables (le texte lui-même est inchangé)
+    t = re.sub(r" ([?!:;»])", " \\1", t)
+    t = t.replace("« ", "« ")
+    return t.replace("\n", "<br>")
+
+
+def slug(t):
+    t = t.lower()
+    for a, b in [("à", "a"), ("â", "a"), ("é", "e"), ("è", "e"), ("ê", "e"), ("î", "i"), ("ô", "o"),
+                 ("û", "u"), ("ù", "u"), ("ç", "c"), ("’", "-"), ("'", "-")]:
+        t = t.replace(a, b)
+    return re.sub(r"[^a-z0-9]+", "-", t).strip("-")
+
+
+def ext(href):
+    return ' target="_blank" rel="noopener"' if href.startswith("http") else ""
+
+
+def img(key, alt, cls="", loading="lazy"):
+    c = f' class="{cls}"' if cls else ""
+    return f'<img{c} src="{IMG}{key}.jpg" alt="{html.escape(alt)}" loading="{loading}" decoding="async">'
+
+
+def paras(ps):
+    return "".join(f"<p>{inl(p)}</p>" for p in ps)
+
+
+def faq(items):
+    out = ['<div class="faq">']
+    for q, answer in items:
+        out.append('<details class="faq-item"><summary><span class="faq-icon" aria-hidden="true"></span>'
+                   f'<span class="faq-q">{inl(q)}</span></summary><div class="faq-a">{paras(answer)}</div></details>')
+    out.append("</div>")
+    return "".join(out)
+
+
+def more(label, href, soon="bientôt"):
+    if href is None:
+        return f'<span class="more is-soon" aria-disabled="true">{inl(label)} <small>{soon}</small></span>'
+    return f'<a class="more" href="{href}"{ext(href)}>{inl(label)}</a>'
+
+
+def btn(label, href, cls="btn"):
+    return f'<a class="{cls}" href="{href}"{ext(href)}>{inl(label)}</a>'
+
+
+# ------------------------------------------------------------------ blocs des pages intérieures
+def render_blocks(blocks):
+    out = []
+    for b in blocks:
+        k = b[0]
+        if k == "lead":
+            out.append(f'<p class="lead">{inl(b[1])}</p>')
+        elif k == "p":
+            out.append(f"<p>{inl(b[1])}</p>")
+        elif k == "h2":
+            out.append(f'<h2 id="{slug(b[1])}">{inl(b[1])}</h2>')
+        elif k == "h3":
+            out.append(f"<h3>{inl(b[1])}</h3>")
+        elif k == "anchor":
+            out.append(f'<span id="{b[1]}" class="anchor"></span>')
+        elif k == "quote":
+            cite = f"<cite>{inl(b[2])}</cite>" if b[2] else ""
+            out.append(f'<blockquote class="pull"><p>{inl(b[1])}</p>{cite}</blockquote>')
+        elif k == "box":
+            out.append(f'<aside class="box"><p class="box-title">{inl(b[1])}</p>{paras(b[2])}</aside>')
+        elif k == "signs":
+            out.append(f'<aside class="box signs"><p class="box-title">{inl(b[1])}</p><ol>' +
+                       "".join(f"<li>{inl(p)}</li>" for p in b[2]) + "</ol></aside>")
+        elif k == "img":
+            cap = f"<figcaption>{inl(b[3])}</figcaption>" if b[3] else ""
+            out.append(f'<figure class="wide">{img(b[1], b[2])}{cap}</figure>')
+        elif k == "figure":
+            cap = f"<figcaption>{inl(b[3])}</figcaption>" if b[3] else ""
+            out.append(f'<figure class="portrait">{img(b[1], b[2])}{cap}</figure>')
+        elif k == "imgs":
+            out.append(f'<div class="duo n{len(b[1])}">' + "".join(f"<figure>{img(a, al)}</figure>" for a, al in b[1]) + "</div>")
+        elif k == "btn":
+            out.append(f'<p class="btn-row">{btn(b[1], b[2])}</p>')
+        elif k == "lines":
+            out.append('<p class="lines">' + "<br>".join(inl(l) for l in b[1]) + "</p>")
+        elif k == "linkrow":
+            out.append('<ul class="linkrow">' + "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in b[1]) + "</ul>")
+        elif k == "cta":
+            out.append(f'<p class="btn-row">{btn(*HOME["contact"]["button"])}</p>')
+        elif k == "tables":
+            out.append('<div class="tables">')
+            for title, sub, head, rows in b[1]:
+                cap = f"<caption><span>{inl(title)}</span>" + (f" <small>{inl(sub)}</small>" if sub else "") + "</caption>"
+                th = "".join(f'<th scope="col">{inl(h)}</th>' for h in head)
+                body = "".join("<tr>" + f'<th scope="row">{inl(r[0])}</th>' + "".join(f"<td>{inl(c)}</td>" for c in r[1:]) + "</tr>" for r in rows)
+                out.append(f'<table>{cap}<thead><tr>{th}</tr></thead><tbody>{body}</tbody></table>')
+            out.append("</div>")
+        elif k == "house":
+            _, name, key, text, (lbl, href) = b
+            out.append(f'<article class="house" id="{slug(name)}"><figure>{img(key, name)}</figure>'
+                       f'<div class="house-body"><h2>{inl(name)}</h2><p>{inl(text)}</p>{more(lbl, href)}</div></article>')
+        elif k == "contacts":
+            out.append('<div class="contacts">')
+            for title, lines, links in b[1]:
+                out.append(f'<section class="contact-card"><h2>{inl(title)}</h2><p>' + "<br>".join(inl(l) for l in lines) + "</p>" +
+                           "".join(f"<p>{more(l, h)}</p>" for l, h in links) + "</section>")
+            out.append("</div>")
+        else:
+            raise ValueError(k)
+    return "\n".join(out)
+
+
+# ------------------------------------------------------------------ en-tête, langue, pied de page
+def lang_switch(lang):
+    items = []
+    for code, name in LANGS:
+        if code == lang:
+            items.append(f'<li><span class="lang-cur" aria-current="true">{name}</span></li>')
+        elif code == "fr":
+            items.append(f'<li><a href="index.html" lang="fr" hreflang="fr">{name}</a></li>')
+        elif code == "en":
+            items.append(f'<li><a href="index-en.html" lang="en" hreflang="en">{name}</a></li>')
+        else:
+            items.append(f'<li><span class="lang-soon" lang="{code}">{name} <small>{"soon" if lang == "en" else "bientôt"}</small></span></li>')
+    label = "Langue" if lang == "fr" else "Language"
+    return (f'<div class="lang"><button class="lang-btn" type="button" aria-expanded="false" aria-haspopup="true" '
+            f'aria-label="{label}" data-lang><span class="globe" aria-hidden="true"></span>{lang.upper()}</button>'
+            f'<ul class="lang-list" hidden>{"".join(items)}</ul></div>')
+
+
+def header(t, current, lang):
+    L = lang == "en"
+    nav = EN.NAV_EN if L else NAV
+    cta_l, cta_h = EN.CTA_EN if L else CTA
+    more_label = EN.MORE_LABEL_EN if L else MORE_LABEL
+    groups = EN.MORE_EN if L else MORE
+    util = EN.UTILITY_EN if L else UTILITY
+    tag = (EN.TAGLINE_EN if L else "Abbaye cistercienne fondée en 1132") if t["tagline"] else ""
+    brand_href = "index-en.html" if L else "index.html"
+
+    items = []
+    for label, href, sub in nav:
+        cur = ' aria-current="page"' if current == label else ""
+        if sub:
+            subs = "".join(f'<li><a href="{h}">{inl(l)}</a></li>' for l, h in sub)
+            items.append(f'<li class="has-sub"><a href="{href}"{cur}>{inl(label)}</a><ul class="sub">{subs}</ul></li>')
+        else:
+            items.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
+    mega = ""
+    if t["menu"] == "mega":
+        items.append(f'<li class="more-li"><button class="more-btn" type="button" aria-expanded="false" aria-controls="mega" data-more>'
+                     f'{inl(more_label)}<span class="caret" aria-hidden="true"></span></button></li>')
+        cols = "".join(f'<div class="mega-col"><p class="mega-title">{inl(g)}</p><ul>' +
+                       "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in links) + "</ul></div>"
+                       for g, links in groups)
+        mega = (f'<div class="mega" id="mega" hidden data-mega><div class="mega-inner">'
+                f'<figure class="mega-fig">{img("wa-clocher", "Le clocher de l’abbaye")}</figure>{cols}'
+                f'<button class="mega-close" type="button" data-mega-close aria-label="Fermer">×</button></div></div>')
+    utilbar = ""
+    if t["menu"] == "utility":
+        utilbar = ('<div class="util"><ul>' + "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in util) + "</ul></div>")
+    tag_html = f'<span class="tagline">{inl(tag)}</span>' if tag else ""
+    left, right, drawer = lang_switch(lang), "", ""
+    if t["menu"] == "drawer":
+        cols = "".join(f'<div class="drawer-group"><p class="mega-title">{inl(g)}</p><ul>' +
+                       "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in links) + "</ul></div>"
+                       for g, links in groups)
+        left = (f'<button class="drawer-btn" type="button" aria-expanded="false" aria-controls="drawer" data-drawer>'
+                f'<span class="bars" aria-hidden="true"></span><span class="drawer-label">{"Menu"}</span></button>')
+        right = lang_switch(lang)
+        drawer = (f'<div class="drawer" id="drawer" hidden data-drawer-panel><div class="drawer-backdrop" data-drawer-close></div>'
+                  f'<aside class="drawer-panel" aria-label="{more_label}"><button class="drawer-close" type="button" data-drawer-close aria-label="{"Close" if L else "Fermer"}">×</button>'
+                  f'<p class="drawer-brand">Abbaye de Sept-Fons</p>{cols}'
+                  f'<p class="drawer-cta">{btn(cta_l, cta_h)}</p></aside></div>')
+    return f"""<header class="site-header" data-header>
+  {utilbar}
+  <div class="h-top">
+    <div class="h-left">{left}</div>
+    <a class="brand" href="{brand_href}"><span class="brand-name">Abbaye de Sept-Fons</span>{tag_html}</a>
+    <div class="h-right">{right}<a class="cta" href="{cta_h}">{inl(cta_l)}</a></div>
+  </div>
+  <nav class="main-nav" aria-label="{'Main navigation' if L else 'Navigation principale'}"><ul>{"".join(items)}</ul></nav>
+  {mega}
+</header>
+{drawer}"""
+
+
+def footer(lang):
+    L = lang == "en"
+    titles = EN.FOOTER_TITLES_EN if L else [g for g, _ in FOOTER_LINKS]
+    cols = "".join(
+        f'<div class="f-col"><p class="f-title">{inl(titles[i])}</p><ul>' +
+        "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in links) + "</ul></div>"
+        for i, (_, links) in enumerate(FOOTER_LINKS))
+    text = EN.FOOTER_TEXT_EN if L else FOOTER_TEXT
+    q = EN.FOOTER_QUOTE_EN if L else FOOTER_QUOTE
+    note = f'<p class="f-note">{EN.NOTE_EN}</p>' if L else ""
+    return f"""<footer class="site-footer">
+  <div class="f-inner">
+    <div class="f-about">
+      <p class="f-brand"><a href="{'index-en.html' if L else 'index.html'}">Abbaye de Sept-Fons</a></p>
+      <p class="f-text">{inl(text)}</p>
+      <blockquote class="f-quote"><p>{inl(q[0])}</p><cite>{inl(q[1])}</cite></blockquote>
+      <p class="f-address">{"<br>".join(inl(l) for l in FOOTER_ADDRESS)}</p>
+      {note}
+    </div>
+    {cols}
+  </div>
+  <p class="f-bottom"><span>© Abbaye Notre-Dame de Sept-Fons</span> <a href="../index.html">← {'Other versions' if L else 'Autres versions de la maquette'}</a></p>
+</footer>"""
+
+
+def shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_js=""):
+    return f"""<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(title)}</title>
+<meta name="description" content="{html.escape(desc)}">
+<meta name="theme-color" content="{t['color']}">
+<link rel="alternate" hreflang="fr" href="index.html">
+<link rel="alternate" hreflang="en" href="index-en.html">
+<link rel="icon" href="../assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?{t['fonts']}&display=swap">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="theme.css">
+<script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="{t['cls']} menu-{t['menu']} {body_cls}">
+<a class="skip" href="#contenu">{'Skip to content' if lang == 'en' else 'Aller au contenu'}</a>
+{header(t, current, lang)}
+<main id="contenu">
+{body}
+</main>
+{footer(lang)}
+<script src="../assets/js/site.js" defer></script>{extra_js}
+{review_tags("../")}
+</body>
+</html>
+"""
+
+
+# ------------------------------------------------------------------ accueil (forme de la maquette des frères)
+def home(H, lang="fr"):
+    a, f, j, vo, c = H["ami"], H["freres"], H["journee"], H["vocation"], H["contact"]
+    soon = "soon" if lang == "en" else "bientôt"
+    return f"""
+<section class="hero" aria-label="Ouverture">
+  <div class="hero-media">{img(H["hero_img"][0], H["hero_img"][1], "", "eager")}</div>
+  <h1 class="hero-title"><span>{inl(H["hero_title"][0])}</span> <span>{inl(H["hero_title"][1])}</span></h1>
+</section>
+
+<section class="s intro" data-n="I">
+  <div class="narrow reveal">
+    {paras(H["intro"])}
+    {faq(H["intro_faq"])}
+  </div>
+</section>
+
+<section class="s split" id="ami" data-n="II">
+  <figure class="split-img">{img(*a["img"])}</figure>
+  <div class="split-text reveal">
+    <h2>{inl(a["title"])}</h2>
+    {paras(a["paras"])}
+    {faq(a["faq"])}
+  </div>
+</section>
+
+<section class="quote-band" aria-label="Une parole pour s’arrêter">
+  <blockquote class="reveal"><p><span>{inl(H["quote"][0])}</span> <span>{inl(H["quote"][1])}</span></p></blockquote>
+</section>
+
+<section class="s freres" id="freres" data-n="III">
+  <figure class="big-img">{img(*f["img"])}</figure>
+  <div class="narrow reveal">
+    <h2>{inl(f["title"])}</h2>
+    {paras(f["paras"])}
+    {faq(f["faq"])}
+    {more(*f["link"], soon=soon)}
+  </div>
+</section>
+
+<section class="s journee" id="journee" data-n="IV">
+  <div class="pair">{"".join(f"<figure>{img(k, al)}</figure>" for k, al in j["imgs"])}</div>
+  <div class="narrow reveal">
+    <h2>{inl(j["title"])}</h2>
+    {paras(j["paras"])}
+    {more(*j["link"], soon=soon)}
+  </div>
+</section>
+
+<section class="s vocation" id="vocation" data-n="V">
+  <div class="narrow reveal">
+    <h2>{inl(vo["title"])}</h2>
+    {paras(vo["paras"])}
+    {faq(vo["faq"])}
+    {more(*vo["link"], soon=soon)}
+  </div>
+</section>
+
+<section class="s contact" id="ecrire" data-n="VI">
+  <div class="narrow center reveal">
+    <h2>{inl(c["title"])}</h2>
+    {paras(c["paras"])}
+    <p class="btn-row">{btn(*c["button"])}</p>
+  </div>
+</section>
+"""
+
+
+def page(p):
+    nxt = "".join(f'<a href="{h}"><small>Pour continuer</small><span>{inl(l)}</span></a>' for l, h in p["next"])
+    return f"""
+<section class="page-hero">
+  <figure class="ph-img">{img(p["hero"][0], p["hero"][1], "", "eager")}</figure>
+  <div class="ph-title">
+    <p class="kicker">{inl(p["kicker"])}</p>
+    <h1>{inl(p["title"])}</h1>
+  </div>
+</section>
+<article class="prose">
+{render_blocks(p["blocks"])}
+</article>
+<nav class="next" aria-label="Pour continuer">{nxt}</nav>
+"""
+
+
+# ------------------------------------------------------------------ formulaire « Nous écrire »
+def form_page():
+    def field(name, label, typ="text", req=False, extra="", hint=""):
+        r = " required" if req else ""
+        h = f'<small class="hint">{hint}</small>' if hint else ""
+        return (f'<label class="fld"><span>{label}{" <i>*</i>" if req else ""}</span>'
+                f'<input type="{typ}" name="{name}"{r}{extra}>{h}</label>')
+    return f"""
+<section class="page-hero form-hero">
+  <div class="ph-title">
+    <p class="kicker">Nous écrire</p>
+    <h1>{inl(HOME["contact"]["title"])}</h1>
+  </div>
+</section>
+<div class="form-wrap">
+  <p class="form-intro">Choisissez l’objet de votre message et remplissez quelques champs : le message se rédige tout seul. Vous pouvez ensuite le relire et le modifier avant de l’envoyer.</p>
+  <form class="smart-form" id="smart-form" novalidate>
+    <fieldset class="objets">
+      <legend>Objet</legend>
+      <label class="objet"><input type="radio" name="objet" value="question" checked><span><b>Une question</b><small>Vie monastique, vocation, discernement</small></span></label>
+      <label class="objet"><input type="radio" name="objet" value="sejour"><span><b>Un séjour ou une retraite</b><small>Hôtellerie — Père Hôtelier</small></span></label>
+      <label class="objet"><input type="radio" name="objet" value="commande"><span><b>Une commande</b><small>Moulin de la Trappe, confitures, album</small></span></label>
+    </fieldset>
+
+    <div class="form-grid">
+      <div class="form-fields">
+        <div class="row2">
+          {field("prenom", "Prénom", req=True, extra=' autocomplete="given-name"')}
+          {field("nom", "Nom", req=True, extra=' autocomplete="family-name"')}
+        </div>
+        <div class="row2">
+          {field("tel", "Téléphone", "tel", True, ' autocomplete="tel"')}
+          {field("email", "E-mail", "email", True, ' autocomplete="email"')}
+        </div>
+
+        <div class="grp" data-for="question">
+          <label class="fld"><span>Où en êtes-vous ?</span>
+            <select name="situation">
+              <option value="questions">Je me pose des questions sur la vie monastique</option>
+              <option value="rencontre">J’aimerais rencontrer un frère pour en parler</option>
+              <option value="decouvrir">J’aimerais venir quelques jours découvrir la vie de la communauté</option>
+            </select></label>
+          <div class="row2">
+            {field("age", "Âge", "number", extra=' min="15" max="99" inputmode="numeric"', hint="facultatif")}
+            <label class="fld"><span>Langue de réponse</span>
+              <select name="langue"><option>Français</option><option>English</option><option>Deutsch</option><option>Español</option><option>Italiano</option><option>Čeština</option><option>Polski</option></select></label>
+          </div>
+          <label class="fld"><span>Votre question</span><textarea name="question" rows="3" placeholder="En quelques mots…"></textarea></label>
+        </div>
+
+        <div class="grp" data-for="sejour" hidden>
+          <div class="row2">
+            {field("arrivee", "Arrivée", "date", True)}
+            {field("depart", "Départ", "date", True)}
+          </div>
+          <div class="row2">
+            <label class="fld"><span>Type de séjour</span>
+              <select name="type_sejour">
+                <option value="retraite">Retraite individuelle</option>
+                <option value="premiere">Première visite (3 ou 4 jours conseillés)</option>
+                <option value="groupe">Séjour en groupe</option>
+                <option value="jeunes">Groupe de jeunes</option>
+              </select></label>
+            {field("personnes", "Nombre de personnes", "number", extra=' min="1" max="60" value="1" inputmode="numeric"')}
+          </div>
+          <label class="chk"><input type="checkbox" name="vocation"><span>Je m’interroge sur la vie monastique et j’aimerais pouvoir parler avec un frère pendant mon séjour</span></label>
+          <label class="fld"><span>Précisions</span><textarea name="precisions" rows="3" placeholder="Heure d’arrivée, régime alimentaire, besoin particulier…"></textarea></label>
+        </div>
+
+        <div class="grp" data-for="commande" hidden>
+          <div class="lines-edit" data-lines>
+            <div class="line"><label class="fld"><span>Produit</span><input name="produit" list="produits" placeholder="Ex. : Germalyne"></label>
+              <label class="fld qty"><span>Quantité</span><input name="quantite" type="number" min="1" value="1" inputmode="numeric"></label></div>
+          </div>
+          <datalist id="produits"><option value="Germalyne"><option value="Confitures de l’abbaye"><option value="Album « Possibilités et mélodies »"></datalist>
+          <button class="add-line" type="button" data-add-line>+ Ajouter un produit</button>
+          <label class="fld"><span>Adresse de livraison <i>*</i></span><textarea name="adresse" rows="3" required autocomplete="street-address"></textarea></label>
+          <p class="aside-note">Vous pouvez aussi commander directement sur la <a href="{SHOP_URL}" target="_blank" rel="noopener">boutique en ligne</a>.</p>
+        </div>
+      </div>
+
+      <div class="form-preview">
+        <p class="pv-to">Destinataire : <b data-to>La communauté</b></p>
+        <label class="fld"><span>Sujet</span><input name="sujet" data-subject></label>
+        <label class="fld"><span>Votre message <small>rédigé automatiquement, modifiable</small></span>
+          <textarea name="message" rows="15" data-message></textarea></label>
+        <button class="reset-msg" type="button" data-reset hidden>Rétablir le message automatique</button>
+        <p class="form-errors" role="alert" data-errors></p>
+        <p class="btn-row"><button class="btn" type="submit">Envoyer</button></p>
+        <p class="form-status" role="status" data-status></p>
+      </div>
+    </div>
+  </form>
+  <p class="form-alt">Vous préférez téléphoner ? Standard : 04 70 48 14 90 · Produits : 04 70 48 14 70</p>
+</div>
+"""
+
+
+# ------------------------------------------------------------------ VERSION 1 — la maquette des frères (rendu d'origine)
+def mq_header(current, lang):
+    L = lang == "en"
+    nav = EN.NAV_EN if L else NAV
+    cta_l, cta_h = EN.CTA_EN if L else CTA
+    items = []
+    for label, href, sub in nav:
+        cur = ' aria-current="page"' if current == label else ""
+        if sub:
+            subs = "".join(f'<li><a href="{h}">{inl(l)}</a></li>' for l, h in sub)
+            items.append(f'<li class="has-sub"><a href="{href}"{cur}>{inl(label)}</a><ul class="sub">{subs}</ul></li>')
+        else:
+            items.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
+    return f"""<header class="site-header" data-header>
+  <div class="h-inner">
+    <a class="brand" href="{'index-en.html' if L else 'index.html'}">Abbaye de Sept-Fons</a>
+    <nav class="main-nav" id="main-nav" aria-label="Navigation principale" data-nav>
+      <ul>{"".join(items)}</ul>
+      <a class="cta cta-mobile" href="{cta_h}">{inl(cta_l)}</a>
+    </nav>
+    {lang_switch(lang)}
+    <a class="cta" href="{cta_h}">{inl(cta_l)}</a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="main-nav" data-menu><span class="bars" aria-hidden="true"></span><span class="sr">Menu</span></button>
+  </div>
+</header>"""
+
+
+def mq_home(H, lang="fr"):
+    a, f, j, vo, c = H["ami"], H["freres"], H["journee"], H["vocation"], H["contact"]
+    soon = "soon" if lang == "en" else "bientôt"
+    return f"""
+<section class="hero" aria-label="Ouverture">
+  {img(H["hero_img"][0], H["hero_img"][1], "hero-img", "eager")}
+  <h1 class="hero-title"><span>{inl(H["hero_title"][0])}</span> <span>{inl(H["hero_title"][1])}</span></h1>
+</section>
+<section class="intro"><div class="narrow">{paras(H["intro"])}{faq(H["intro_faq"])}</div></section>
+<section class="split" id="ami">
+  <figure class="split-img">{img(*a["img"])}</figure>
+  <div class="split-text"><h2>{inl(a["title"])}</h2>{paras(a["paras"])}{faq(a["faq"])}</div>
+</section>
+<section class="quote-band" aria-label="Une parole pour s’arrêter">
+  <blockquote><p><span>{inl(H["quote"][0])}</span> <span>{inl(H["quote"][1])}</span></p></blockquote>
+</section>
+<section class="freres" id="freres">
+  <figure class="big-img">{img(*f["img"])}</figure>
+  <div class="narrow"><h2>{inl(f["title"])}</h2>{paras(f["paras"])}{faq(f["faq"])}{more(*f["link"], soon=soon)}</div>
+</section>
+<section class="journee" id="journee">
+  <div class="pair">{"".join(f"<figure>{img(k, al)}</figure>" for k, al in j["imgs"])}</div>
+  <div class="narrow"><h2>{inl(j["title"])}</h2>{paras(j["paras"])}{more(*j["link"], soon=soon)}</div>
+</section>
+<section class="vocation" id="vocation">
+  <div class="narrow"><h2>{inl(vo["title"])}</h2>{paras(vo["paras"])}{faq(vo["faq"])}{more(*vo["link"], soon=soon)}</div>
+</section>
+<section class="contact" id="ecrire">
+  <div class="narrow center"><h2>{inl(c["title"])}</h2>{paras(c["paras"])}<p class="btn-row">{btn(*c["button"])}</p></div>
+</section>
+"""
+
+
+def mq_page(p):
+    nxt = "".join(f'<a href="{h}">{inl(l)} →</a>' for l, h in p["next"])
+    return f"""
+<header class="page-head">
+  <p class="kicker">{inl(p["kicker"])}</p>
+  <h1>{inl(p["title"])}</h1>
+</header>
+<figure class="page-hero">{img(p["hero"][0], p["hero"][1], "", "eager")}</figure>
+<article class="prose">
+{render_blocks(p["blocks"])}
+</article>
+<nav class="next" aria-label="Pour continuer"><p>Pour continuer</p>{nxt}</nav>
+"""
+
+
+def mq_shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_js=""):
+    return f"""<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(title)}</title>
+<meta name="description" content="{html.escape(desc)}">
+<meta name="theme-color" content="{t['color']}">
+<link rel="icon" href="../assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?{t['fonts']}&display=swap">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="{body_cls}">
+<a class="skip" href="#contenu">{'Skip to content' if lang == 'en' else 'Aller au contenu'}</a>
+{mq_header(current, lang)}
+<main id="contenu">
+{body}
+</main>
+{footer(lang)}
+<script src="../assets/js/site.js" defer></script>{extra_js}
+{review_tags("../")}
+</body>
+</html>
+"""
+
+
+# ------------------------------------------------------------------ écriture
+HOME_DESC = "Abbaye cistercienne trappiste de Sept-Fons (Allier) : chercher Dieu, prier et vivre chaque jour avec des frères. Et si Dieu m’appelait ?"
+
+
+def main():
+    for old in ["version-1-maquette", "version-2-clarte", "version-3-nocturne", "1-nocturne"]:
+        shutil.rmtree(os.path.join(ROOT, old), ignore_errors=True)
+    for t in THEMES:
+        d = os.path.join(ROOT, t["folder"])
+        os.makedirs(d, exist_ok=True)
+        for f in os.listdir(d):
+            if f.endswith(".html"):
+                os.remove(os.path.join(d, f))
+        w = lambda name, s: open(os.path.join(d, name), "w", encoding="utf-8").write(s)
+        if t["menu"] == "maquette":
+            sh, hm, pg = mq_shell, mq_home, mq_page
+        else:
+            sh, hm, pg = shell, home, page
+        w("index.html", sh(t, "Abbaye de Sept-Fons", HOME_DESC, hm(HOME), None, "home"))
+        w("index-en.html", sh(t, "Abbey of Sept-Fons", "Cistercian Trappist abbey of Sept-Fons (France).", hm(EN.HOME_EN, "en"), None, "home", "en"))
+        for key in PAGE_ORDER:
+            p = PAGES[key]
+            desc = next((b[1] for b in p["blocks"] if b[0] in ("lead", "p")), p["title"])[:155]
+            desc = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", desc)
+            w(key + ".html", sh(t, f'{p["title"]} — Abbaye de Sept-Fons', desc, pg(p), p["nav"], "page page-" + key))
+        w("ecrire.html", sh(t, "Nous écrire — Abbaye de Sept-Fons", "Écrire à l’abbaye de Sept-Fons : question, séjour à l’hôtellerie, commande.",
+                               form_page(), None, "page page-ecrire", extra_js='\n<script src="../assets/js/form.js" defer></script>'))
+        print("ok", t["folder"], len(PAGE_ORDER) + 3, "pages")
+    chooser()
+
+
+THUMBS = {"1-maquette-des-freres": "vaisselle", "4-nocturne": "office-nuit", "3-noir-et-blanc": "wa-cloitre", "7-ivoire": "frere-livre",
+          "5-matines": "wa-eglise", "6-terre": "fourche", "2-sept-fons": "eglise-choeur", "8-silence": "wa-couchant"}
+MENU_LABEL = {"mega": "Menu des consignes + rubrique « L’abbaye »", "utility": "Menu des consignes + barre d’accès direct",
+              "simple": "Menu des consignes uniquement",
+              "drawer": "Menu des consignes + menu à gauche pour tout le reste",
+              "maquette": "Menu des consignes (regroupé sur téléphone)"}
+
+
+# Destinataire du courriel préparé par « Envoyer mes remarques » (vide : seul le fichier est téléchargé)
+REVIEW_EMAIL = ""
+
+
+def review_tags(prefix):
+    return (f'<link rel="stylesheet" href="{prefix}assets/css/review.css">\n'
+            f'<script src="{prefix}assets/js/review.js" data-email="{html.escape(REVIEW_EMAIL)}" defer></script>')
+
+
+def chooser():
+    cards = "".join(
+        f'<a class="card" href="{t["folder"]}/index.html" target="_blank" rel="noopener"><div class="thumb" style="background-image:url(assets/img/{THUMBS[t["folder"]]}.jpg)"></div>'
+        f'<div class="body"><span class="n">Version {i}</span><h2>{t["name"]}</h2><p>{html.escape(t["desc"])}</p>'
+        f'<p class="m">{MENU_LABEL[t["menu"]]}</p></div></a>' for i, t in enumerate(THEMES, 1))
+    s = f"""<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sept-Fons — huit maquettes</title><link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{{--bg:#f5f2eb;--ink:#1f1c18;--ink-2:#655d52;--line:#ddd5c7;--accent:#8a6a3b}}
+*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 Inter,system-ui,sans-serif}}
+header,main,footer{{max-width:76rem;margin:0 auto;padding-left:1.25rem;padding-right:1.25rem}}
+header{{padding-top:4rem;padding-bottom:2rem}}
+h1{{font:400 clamp(2.2rem,1.4rem + 3vw,3.6rem)/1.1 "Cormorant Garamond",serif;margin:0 0 .8rem}}
+.howto{{max-width:48rem;color:var(--ink-2)}}.howto ol{{margin:.4rem 0 .6rem;padding-left:1.3rem}}.howto li{{margin:.25rem 0}}.howto b{{color:var(--ink);font-weight:600}}.small{{font-size:.88rem}}.lede{{margin:0}}
+main{{padding-bottom:4rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(20rem,1fr));gap:1.25rem}}
+a.card{{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;transition:transform .25s,box-shadow .25s}}
+a.card:hover{{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,.08)}}
+.thumb{{aspect-ratio:16/10;background-size:cover;background-position:center}}
+.body{{padding:1.1rem 1.3rem 1.4rem}}.n{{font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}}
+h2{{font:500 1.7rem/1.2 "Cormorant Garamond",serif;margin:.2rem 0 .4rem}}.body p{{margin:0 0 .5rem;color:var(--ink-2);font-size:.93rem}}
+.m{{font-size:.8rem!important;border-top:1px solid var(--line);padding-top:.6rem;margin-top:.8rem!important}}
+footer{{padding-top:2rem;padding-bottom:4rem;border-top:1px solid var(--line);color:var(--ink-2);font-size:.9rem}}footer ul{{padding-left:1.1rem}}
+</style></head><body>
+<header><h1>Abbaye de Sept-Fons — huit propositions</h1>
+<div class="howto"><p class="lede">Ouvrez une version, puis donnez votre avis directement sur la page :</p>
+<ol><li>Cliquez sur <b>✎ Commenter</b>, en bas à droite.</li>
+<li>Cliquez sur l’élément de votre choix (titre, photo, menu, bouton…) : <b>👍 J’aime</b> ou <b>👎 Je n’aime pas</b>, et ajoutez une remarque si vous le souhaitez.</li>
+<li>Une fois terminé, cliquez sur <b>☰</b> puis <b>Envoyer les remarques</b> : un fichier est enregistré dans vos Téléchargements.</li></ol>
+<p class="small">Ce fichier peut passer de frère en frère : chacun l’ouvre (<b>☰</b> › « Ouvrir un fichier de remarques reçu »), voit les remarques des autres, ajoute les siennes et le transmet. Le bouton <b>◉</b> masque ou affiche les remarques.</p></div></header>
+<main>{cards}</main>
+{review_tags("")}
+</body></html>
+"""
+    open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8").write(s)
+
+
+if __name__ == "__main__":
+    main()

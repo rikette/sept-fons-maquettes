@@ -1,0 +1,31 @@
+/* 5 — Terre : le travail bien fait, les champs, le vert olive. */
+:root{
+  --bg:#f4f2ea; --bg2:#e8e6d8; --paper:#fbfaf5; --ink:#23261f; --ink2:#5a5e52; --line:#d6d3c3;
+  --accent:#55673a; --dark:#262b20; --on-dark:#f4f2ea;
+  --hdr-bg:#f4f2ea; --hdr-line:#d6d3c3;
+  --btn-bg:#55673a; --btn-ink:#fff; --btn-hover:#23261f;
+  --display:"Literata",Georgia,serif; --body:"Work Sans",system-ui,sans-serif; --brand:"Literata",serif;
+  --brand-size:1.4rem; --brand-track:.12em; --brand-weight:500;
+  --nav-size:.92rem; --nav-track:.01em;
+  --h-weight:300; --body-size:1.02rem; --lh:1.75; --radius:6px; --hero-h:min(86vh,54rem);
+}
+.brand-name{font-variant:small-caps;text-transform:lowercase}
+.hero-title{font-weight:300;font-size:clamp(2.6rem,1.2rem + 5vw,5.6rem)}
+.hero-title span+span{font-style:italic}
+.cta{background:var(--accent);color:#fff;border:0;padding:.5rem 1.1rem;border-radius:99px;font-weight:500}
+.cta:hover{background:var(--ink);color:#fff}
+.main-nav>ul>li>a:hover,.more-btn:hover{color:var(--accent)}
+.split{background:var(--bg2);margin:0 clamp(.75rem,2.5vw,2.5rem);border-radius:var(--radius);overflow:hidden}
+.split-text{max-width:40rem}
+.big-img{padding:0 clamp(.75rem,2.5vw,2.5rem)}.big-img img{border-radius:var(--radius)}
+.intro .narrow>p{font-family:var(--display);font-weight:300;font-size:clamp(1.35rem,1.1rem + .8vw,1.7rem);line-height:1.45}
+.faq-item summary{font-weight:400;font-size:1.2rem}
+.quote-band{margin:clamp(3rem,6vw,5rem) clamp(.75rem,2.5vw,2.5rem);border-radius:var(--radius)}
+.quote-band p{font-weight:300}
+.quote-band span+span{font-style:italic;color:#c9d3b0}
+.quote-left .quote-band blockquote{border-left-color:#8a9a64}
+.more{font-style:normal;font-weight:500;color:var(--accent)}
+.btn{border-radius:99px;font-weight:500;letter-spacing:.03em}
+.mega-fig img{border-radius:var(--radius)}
+.objet span{border-radius:12px}
+@media (max-width:760px){.cta{padding:.4rem .7rem}}

@@ -1,0 +1,27 @@
+/* 6 — Sept-Fons : dans la continuité du site actuel (Playfair, noir et blanc, rouge liturgique). */
+:root{
+  --bg:#ffffff; --bg2:#f6f4f1; --paper:#faf9f7; --ink:#1a1a1a; --ink2:#5c5c5c; --line:#e3e0db;
+  --accent:#a3152a; --dark:#141414; --on-dark:#fff;
+  --hdr-bg:#ffffff; --hdr-line:#e8e5e0;
+  --btn-bg:#a3152a; --btn-ink:#fff; --btn-hover:#1a1a1a;
+  --display:"Playfair Display",Georgia,serif; --body:"Source Sans 3",system-ui,sans-serif; --brand:"Playfair Display",serif;
+  --brand-size:1.55rem; --brand-track:.02em; --brand-case:none; --brand-weight:400;
+  --nav-size:.98rem; --body-size:1.08rem; --lh:1.72;
+}
+.util{background:#141414;color:#eee;border:0;font-size:.8rem}
+.util a{opacity:.85}
+.h-top{padding-top:1.4rem}
+.brand-name::after{content:"";display:block;width:2rem;height:2px;background:var(--accent);margin:.5rem auto 0}
+.scrolled .brand-name::after{opacity:0}
+.cta{border:0;background:var(--accent);color:#fff;padding:.5rem 1rem;font-weight:600}
+.cta:hover{background:#1a1a1a;color:#fff}
+.main-nav>ul>li>a{font-weight:500}
+.hero-title span+span{font-style:italic}
+.intro .narrow>p:first-child::first-letter{font-family:var(--display);float:left;font-size:3.6em;line-height:.85;margin:.06em .1em 0 0;color:var(--accent)}
+.faq-item summary{font-size:1.2rem}
+.quote-band{background:#141414}
+.quote-band p{font-style:italic}
+.quote-band blockquote::after{content:"";display:block;width:2.5rem;height:2px;background:var(--accent);margin:2.2rem auto 0}
+.vocation{background:#f6f4f1}
+.btn{font-weight:600;letter-spacing:.06em}
+.page-banner .ph-title h1{font-style:italic}

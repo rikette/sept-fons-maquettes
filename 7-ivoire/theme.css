@@ -1,0 +1,15 @@
+/* 3 — Ivoire : la maquette des frères au plus près. Garamond, fond clair, ocre discret, barre d'accès direct. */
+:root{
+  --bg:#f7f4ee; --bg2:#efe9de; --paper:#fbf9f5; --ink:#24211d; --ink2:#5b544a; --line:#ddd5c7;
+  --accent:#8a6a3b; --dark:#1c1a17; --on-dark:#fff;
+  --hdr-bg:#f7f4ee; --hdr-line:#ddd5c7;
+  --btn-bg:#24211d; --btn-ink:#fff; --btn-hover:#8a6a3b;
+  --display:"Cormorant Garamond","EB Garamond",Georgia,serif; --body:"EB Garamond",Georgia,serif; --brand:"Cormorant Garamond",serif;
+  --brand-size:1.12rem; --brand-track:.26em; --brand-weight:600; --nav-size:1.05rem;
+  --h-weight:500; --body-size:1.18rem; --lh:1.7;
+}
+.util{background:#efe9de;font-family:var(--body);font-style:italic;font-size:.9rem;letter-spacing:.01em}
+.main-nav>ul>li+li:not(.more-li)::before{content:"·";position:absolute;left:-.2rem;top:.45rem;opacity:.5}
+.intro .narrow>p:last-of-type{font-style:italic}
+.intro .narrow>p{font-size:1.28rem}
+.faq-item summary{font-weight:500}

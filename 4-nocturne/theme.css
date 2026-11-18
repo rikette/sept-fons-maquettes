@@ -1,0 +1,58 @@
+/* 1 — Nocturne : de la nuit de l'office à la lumière du jour. */
+:root{
+  --night:#0f0e0c; --night2:#171512; --dusk:#2a2520; --dawn:#cdbfa8; --day:#f3ede2;
+  --bg:var(--night); --bg2:var(--night2); --paper:#1a1815; --ink:#ece4d4; --ink2:#b9ae9c; --line:rgba(201,164,92,.28);
+  --accent:#c9a45c; --dark:var(--night2); --on-dark:#ece4d4;
+  --hdr-bg:rgba(15,14,12,.92); --hdr-ink:#ece4d4; --hdr-line:rgba(201,164,92,.22);
+  --btn-bg:transparent; --btn-ink:#ece4d4; --btn-hover:#c9a45c;
+  --display:"Cormorant Garamond",Georgia,serif; --body:"Spectral",Georgia,serif; --brand:"Cormorant Garamond",serif;
+  --brand-size:1.1rem; --brand-track:.34em; --brand-weight:500; --nav-size:.76rem; --nav-case:uppercase; --nav-track:.2em;
+  --h-weight:300; --body-weight:300; --body-size:1.1rem; --lh:1.8; --hero-h:100svh; --narrow:37rem;
+}
+.site-header{position:fixed;left:0;right:0;backdrop-filter:blur(8px);background:linear-gradient(rgba(15,14,12,.85),rgba(15,14,12,0));border:0}
+.site-header.scrolled{background:var(--hdr-bg)}
+.brand-name{font-size:1.15rem}
+.cta{border:1px solid rgba(201,164,92,.6);padding:.45rem 1rem;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
+.cta:hover{background:var(--accent);color:#000}
+.main-nav a[aria-current]{color:var(--accent)}
+.mega,.lang-list,.main-nav .sub{background:#14120f;color:var(--ink);border-color:var(--line)}
+.mega a{font-size:1.35rem;font-weight:300}
+.mega a:hover,.lang-list a:hover,.main-nav .sub a:hover{background:none;color:#e2c78e}
+
+.hero{background:var(--night)}
+.hero-media img{object-position:center 75%;animation:slowzoom 30s ease-out both}
+@keyframes slowzoom{from{transform:scale(1.1)}to{transform:none}}
+.hero::after{background:linear-gradient(to bottom,rgba(15,14,12,.85),rgba(15,14,12,.1) 45%,rgba(15,14,12,.15) 75%,var(--night))}
+.hero-title{font-weight:300;padding-top:calc(var(--hh,120px) + 6vh);font-size:clamp(2.8rem,1.2rem + 6vw,6.6rem);line-height:1}
+.hero-title span+span{font-style:italic;color:#e2c78e}
+
+/* l'accueil s'éclaircit en descendant */
+.home .intro{background:var(--night)}
+.home .split{background:var(--night2)}
+.home .split-text{background:var(--night2)}
+.home .quote-band{background:var(--night2)}
+.home .quote-band blockquote::before{content:"";display:block;width:1px;height:3.2rem;background:var(--accent);margin:0 auto 2.4rem}
+.home .quote-band span+span{font-style:italic;color:#e2c78e}
+.home .freres{background:linear-gradient(var(--night2),var(--dusk))}
+.home .journee{background:linear-gradient(var(--dusk),#6f6252 70%,#8f816d)}
+.home .vocation{background:linear-gradient(#8f816d,var(--dawn));color:#221e19;--ink2:#4c4337;--line:rgba(60,48,30,.25);--accent:#7a5d27}
+.home .contact{background:linear-gradient(var(--dawn),var(--day));color:#221e19;border:0;--ink2:#4c4337;--line:rgba(60,48,30,.25);--accent:#7a5d27}
+.home .contact .btn{background:#221e19;color:var(--day);border-color:#221e19}
+.home .contact .btn:hover{background:#7a5d27;border-color:#7a5d27}
+.home .site-footer{background:var(--day);color:#5f564a;--ink:#221e19;--line:rgba(60,48,30,.15);--accent:#7a5d27}
+.intro .narrow>p{font-family:var(--display);font-size:clamp(1.45rem,1.15rem + 1vw,1.95rem);line-height:1.45}
+.intro .narrow>p:nth-child(3){font-style:italic;color:#e2c78e}
+.btn{letter-spacing:.24em;text-transform:uppercase;font-size:.8rem;border-color:var(--accent)}
+.btn:hover{color:#000}
+
+.page-banner .page-hero{height:78svh}
+.page-banner .page-hero::after{background:linear-gradient(to bottom,rgba(15,14,12,.6),rgba(15,14,12,.1) 40%,var(--night))}
+.page-banner .ph-title{color:var(--ink)}
+.page-banner .ph-title .kicker{color:var(--accent);opacity:1}
+.prose h2{text-align:center}
+.prose h2::before{content:"";display:block;width:1px;height:2.4rem;background:var(--accent);margin:0 auto 1.5rem}
+.house h2::before,.contact-card h2::before{display:none}
+.box{background:transparent;border:1px solid var(--line);text-align:center}
+.form-hero{padding-top:var(--hh,120px)}
+.fld input,.fld select,.fld textarea{color-scheme:dark}
+.site-footer{background:#090807}

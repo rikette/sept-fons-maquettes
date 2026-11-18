@@ -1,0 +1,33 @@
+/* 2 — Noir et blanc : les couleurs de l'habit, rien d'autre. Sous-titre sous le nom de l'abbaye. */
+:root{
+  --bg:#ffffff; --bg2:#f2f2f2; --paper:#f7f7f7; --ink:#111111; --ink2:#555555; --line:#dddddd;
+  --accent:#111111; --dark:#0b0b0b; --on-dark:#ffffff;
+  --hdr-bg:#ffffff; --hdr-line:#e5e5e5;
+  --btn-bg:#111; --btn-ink:#fff; --btn-hover:#444;
+  --display:"Instrument Serif",Georgia,serif; --body:"Inter",system-ui,sans-serif; --brand:"Instrument Serif",serif;
+  --brand-size:1.65rem; --brand-track:.01em; --brand-case:none; --brand-weight:400;
+  --nav-size:.74rem; --nav-case:uppercase; --nav-track:.16em;
+  --body-size:1rem; --lh:1.75; --hero-h:min(86vh,52rem); --narrow:35rem;
+}
+h1,h2,h3{letter-spacing:-.005em}
+h2{font-size:clamp(2.2rem,1.4rem + 2.6vw,3.4rem)}
+.tagline{font-family:"Inter",sans-serif;font-style:normal;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;opacity:.55}
+.lang-btn,.cta{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase}
+.cta{border:1px solid #111;padding:.5rem .9rem}
+.cta:hover{background:#111;color:#fff}
+.main-nav a[aria-current]{text-decoration-thickness:1px;text-underline-offset:.7em}
+.hero-title{font-size:clamp(3rem,1.4rem + 5.6vw,6.4rem);line-height:.98}
+.hero-title span+span{font-style:italic}
+.intro .narrow>p{font-family:var(--display);font-size:clamp(1.4rem,1.1rem + 1vw,1.85rem);line-height:1.38}
+.split{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.faq-item summary{font-family:var(--body);font-size:1rem;font-weight:500}
+.quote-band p{font-size:clamp(2.1rem,1.2rem + 3vw,3.7rem)}
+.quote-band span+span{font-style:italic}
+.more{font-style:normal;font-size:.9rem;font-weight:500}
+.btn{text-transform:uppercase;font-size:.78rem;letter-spacing:.16em;padding:1rem 2.4rem}
+.mega a{font-size:1.4rem}
+.kicker,.f-title,.mega-title{color:#777}
+.pair img,.big-img img,.split-img img{filter:grayscale(.15)}
+.box{background:#111;color:#fff;border:0}.box .box-title{color:#aaa}
+.site-footer{background:#0b0b0b;color:#aaa;border:0;--ink:#fff;--line:#2a2a2a}
+.f-title{color:#888}

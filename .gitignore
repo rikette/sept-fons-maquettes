@@ -1,0 +1,6 @@
+_sources/
+_retours/
+*.zip
+.claude/
+__pycache__/
+.env*

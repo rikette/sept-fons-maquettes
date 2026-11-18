@@ -1,0 +1,21 @@
+/* 4 — Matines : la lumière bleutée du petit matin. Menu strictement limité aux consignes. */
+:root{
+  --bg:#eef1f3; --bg2:#e2e8ec; --paper:#f7f9fa; --ink:#1d2733; --ink2:#55606c; --line:#cfd8df;
+  --accent:#4a6178; --dark:#1b2530; --on-dark:#eef1f3;
+  --hdr-bg:#eef1f3; --hdr-line:#cfd8df;
+  --btn-bg:#1d2733; --btn-ink:#fff; --btn-hover:#4a6178;
+  --display:"Marcellus",Georgia,serif; --body:"Lora",Georgia,serif; --brand:"Marcellus",serif;
+  --brand-size:1.15rem; --brand-track:.3em; --nav-size:.95rem;
+  --body-size:1.06rem; --lh:1.78; --radius:2px; --narrow:36rem;
+}
+h2{font-size:clamp(1.9rem,1.3rem + 2vw,2.7rem)}
+.hero-title{font-size:clamp(2.4rem,1.2rem + 4.6vw,5rem);letter-spacing:.01em}
+.hero::after{background:linear-gradient(to bottom,rgba(17,27,38,.7),rgba(17,27,38,0) 50%)}
+.main-nav{border-top:1px solid var(--line);padding-top:.35rem}
+.split{background:#f7f9fa}
+.split-img{order:0}
+.faq-item summary{font-family:var(--body);font-size:1.08rem;font-weight:500}
+.quote-band p{font-size:clamp(1.7rem,1.1rem + 2.2vw,2.7rem)}
+.quote-band blockquote{border-left-color:#7d93a8}
+.more{font-style:normal;letter-spacing:.04em}
+.vocation{background:linear-gradient(#e2e8ec,#eef1f3)}
