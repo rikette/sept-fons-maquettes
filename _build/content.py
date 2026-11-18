@@ -35,6 +35,7 @@ FOOTER_QUOTE = ("« Ne rien avoir de plus cher que le Christ. »", "Règle de S.
 FOOTER_ADDRESS = ["Abbaye de Sept-Fons", "03290 Dompierre-sur-Besbre", "Téléphone standard : 04 70 48 14 90"]
 FOOTER_LINKS = [
     ("L’abbaye", [
+        ("L’abbaye en images", "photos.html"),
         ("Histoire de l’Abbaye", "histoire.html"),
         ("La croix de nos martyrs", "martyrs.html"),
         ("Filiation", "filiation.html"),
@@ -59,7 +60,7 @@ FOOTER_LINKS = [
 # ---------------------------------------------------------------------------
 HOME = {
     "hero_title": ["Quel est l’homme", "qui veut la vie ?"],
-    "hero_img": ("office-nuit", "La communauté à l’office, dans l’église"),
+    "hero_img": ("bro-office", "La communauté à l’office, dans l’église"),
     "intro": [
         "Nous désirons tous le bonheur : une vie pleine, une vie vécue à fond, une vie où aimer et être aimé.",
         "Pourtant, ni le succès, ni l’argent, ni le plaisir ne suffisent à remplir notre cœur. Nous avons soif d’une vie plus profonde, d’un amour qui demeure.",
@@ -74,7 +75,7 @@ HOME = {
     ],
     "ami": {
         "title": "Devenir ami de Dieu",
-        "img": ("frere-livre", "Un frère seul avec son livre, dans la lumière"),
+        "img": ("bro-livre", "Un frère seul avec son livre, dans la lumière"),
         "paras": [
             "C’est fou, mais c’est la réalité : l’homme peut devenir ami de Dieu ! Ce n’est pas une pieuse formule.",
             "Dieu nous appelle à le connaître, à l’aimer, à vivre avec lui. Non pas seulement pendant quelques moments de prière, mais dans toute notre existence.",
@@ -124,7 +125,7 @@ HOME = {
     "journee": {
         "title": "Une journée pour chercher Dieu",
         "imgs": [("pupitres", "La lecture aux pupitres éclairés"),
-                 ("fourche", "Les frères au travail à la fourche")],
+                 ("bro-fourche", "Les frères au travail à la fourche")],
         "paras": [
             "Prier, lire, travailler, vivre avec ses frères : les activités changent, mais une même recherche traverse la journée.",
             "Toute la vie monastique est organisée pour aider le moine à demeurer auprès de Jésus et à lui donner sa vie.",
@@ -178,7 +179,7 @@ PAGES["vie-monastique"] = {
     "nav": "Chercher Dieu",
     "kicker": "Chercher Dieu",
     "title": "Quel est l’homme qui veut la vie ?",
-    "hero": ("wa-eglise", "La communauté dans l’église abbatiale"),
+    "hero": ("bro-oraison", "La communauté dans l’église abbatiale"),
     "blocks": [
         ("lead", "Nous désirons tous le bonheur : une vie pleine, une vie vécue à fond, une vie où aimer et être aimé."),
         ("p", "Pourtant, ce désir profond se heurte à des obstacles et à des déceptions. On peut monter une super boîte, devenir champion du monde de football, star de pop ou milliardaire : cela ne suffit pas à remplir le cœur de l’homme. À certains moments, nous pressentons que la vie est plus que l’argent, le succès ou le plaisir."),
@@ -198,7 +199,7 @@ PAGES["vie-monastique"] = {
         ("p", "Le moine est un homme qui se laisse saisir par Jésus. Il découvre, parfois peu à peu, que Dieu l’appelle à tout quitter pour lui consacrer sa vie."),
         ("p", "Ce n’est donc pas d’abord un projet qu’il invente. C’est une invitation qu’il apprend à reconnaître et à laquelle il désire répondre librement."),
         ("p", "Pourquoi tout quitter ? Pour vivre de cette amitié. Pour chercher Dieu, apprendre à l’aimer et ne rien lui préférer. Le silence, la prière, le travail et la vie commune prennent leur sens à partir de là : ils sont au service de cette relation avec Notre Seigneur."),
-        ("img", "wa-cloitre", "Les frères dans le cloître", None),
+        ("img", "bro-cloitre", "Les frères dans le cloître", None),
         ("h2", "Tout quitter, sans abandonner les hommes"),
         ("p", "Mais cette amitié serait-elle un bonheur que le moine garderait pour lui ?"),
         ("p", "Au contraire. Le moine ne quitte pas tout pour devenir indifférent aux autres. Il ne cherche pas auprès de Dieu un refuge qui le dispenserait d’aimer."),
@@ -265,7 +266,7 @@ PAGES["vocation"] = {
     "nav": "Une vocation ?",
     "kicker": "Une vocation ?",
     "title": "Comment savoir si Dieu m’appelle ?",
-    "hero": ("wa-couchant", "Un chemin dans la lumière du soir"),
+    "hero": ("bro-atelier", "Un jeune frère à l’atelier"),
     "blocks": [
         ("lead", "Il n’est pas nécessaire d’avoir tout éclairci avant de commencer à chercher. Mais on ne s’engage pas non plus sans raisons. Pour reconnaître un éventuel appel de Dieu, nous regardons trois signes : un désir profond, les événements qui nous conduisent vers une communauté et, enfin, ce que cette vie fait grandir en nous lorsque nous commençons réellement à la vivre."),
         ("h2", "Un désir profond, à reconnaître parmi d’autres"),
@@ -282,6 +283,7 @@ PAGES["vocation"] = {
         ("p", "Ce sont parfois des événements très simples. Ils nous font découvrir une vie que nous connaissions peu, nous conduisent vers une communauté et nous invitent à faire un premier pas."),
         ("p", "Le désir intérieur et ces événements se répondent. Nous n’y cherchons pas des messages à déchiffrer à tout prix, mais nous apprenons à reconnaître comment Dieu peut nous conduire à travers ce que nous vivons."),
         ("p", "Ces deux premiers signes permettent d’envisager une entrée au monastère. Mais ils ne suffisent pas encore à confirmer que nous pourrons y prendre racine."),
+        ("img", "bro-prostration", "Un frère prosterné dans l’église", None),
         ("h2", "Une vie dans laquelle on peut grandir"),
         ("p", "Le troisième signe ne se vérifie qu’en commençant réellement à vivre dans la communauté."),
         ("p", "Comme une plante a besoin d’un terrain propice pour prendre racine et se développer, celui qui entre au monastère doit pouvoir y trouver un cadre favorable à sa croissance. Peut-il entrer dans cette vie ? Apprend-il à prier, à vivre avec ses frères, à travailler, à recevoir une formation et à se laisser guider ? Cette vie l’aide-t-elle à grandir dans le don de lui-même et dans l’amour de Dieu ?"),
@@ -308,18 +310,18 @@ PAGES["priere"] = {
     "nav": "Prier et vivre chaque jour",
     "kicker": "Prier et vivre chaque jour",
     "title": "Prier toujours",
-    "hero": ("eglise-choeur", "Le chœur des moines"),
+    "hero": ("bro-messe", "La messe conventuelle dans l’église abbatiale"),
     "blocks": [
         ("lead", "Entre les offices, le moine doit veiller à « la garde du cœur ». Cela signifie maintenir un lien constant et délicat avec Dieu, Notre Seigneur et la Vierge Marie. Ce lien n’est pas une tension forcée ou une concentration nerveuse. Il s’agit plutôt d’une présence calme et intérieure, semblable à l’amour paisible d’un enfant pour sa mère ou d’un ami pour un autre. En effet, il s’agit d’un lien d’amitié spirituelle qui demande une vigilance aimante."),
         ("h2", "L’invocation : l’axe intime de la vocation"),
         ("p", "L’oraison jaculatoire, ou invocation, est une courte prière personnelle. Elle est précise et théologiquement juste. Elle exprime l’orientation du cœur et incarne l’axe de la vocation du moine. Dans le flot des pensées quotidiennes, ces invocations doivent être régulièrement glissées pour purifier et recentrer l’âme. C’est comparable au bâton de Moïse purifiant les eaux amères. Dès le début de la vie monastique, chaque moine, avec l’aide d’un Ancien, doit créer et s’approprier une invocation. Celle-ci l’accompagnera toute sa vie."),
-        ("img", "autel", "Un moine en prière près de l’autel", None),
+        ("img", "bro-crucifix", "Le crucifix devant les vitraux de l’église", None),
         ("h2", "Forger une invocation : du sur mesure"),
         ("p", "Forger une invocation avec un jeune frère dès le postulat est un travail délicat. Le Père Maître ne doit pas imposer la sienne. Cela reste vrai même si cela semble plus simple. L’invocation ne peut pas seulement être une réponse émotionnelle. En réalité, elle doit toucher l’identité profonde du futur moine et correspondre à l’appel spécifique de sa vocation. Elle est donc personnelle, façonnée dans le dialogue spirituel et le discernement."),
-        ("img", "office-nuit", "L’église à l’office de nuit", None),
+        ("img", "bro-office", "Les frères dans les stalles, à l’office de nuit", None),
         ("h2", "Un art ancien, toujours vivant"),
         ("p", "Bien que la pratique des invocations puisse paraître démodée ou mécanique, elle joue un rôle essentiel pour maintenir la communion avec Dieu après l’office ou l’oraison. C’est comme garder le lien avec un être aimé à distance. Une photo, un message, un appel permettent de conserver ce lien. L’invocation s’apparente à ces anciens appels brefs. Il s’agit de deux ou trois sonneries qui servaient à dire « je pense à toi » sans mots. C’est cette image qui guide l’enseignement de l’art des invocations."),
-        ("img", "frere-livre", "Un frère dans les stalles", None),
+        ("imgs", [("bro-cierges", "Un frère à l’autel, entre les cierges"), ("bro-elevation", "L’élévation pendant la messe")]),
         ("h2", "La simplicité d’un geste, la persévérance d’une vie"),
         ("p", "En apparence simple, l’invocation s’enseigne en peu de temps. Mais pour l’incarner vraiment, il faut une vie. Elle demande fidélité, effort, ténacité. Elle devient alors ce fil discret mais solide qui relie l’âme de l’homme à Dieu, dans les silences du quotidien."),
         ("btn", "Horaires des offices religieux", "horaires.html"),
@@ -332,7 +334,7 @@ PAGES["travail"] = {
     "nav": "Prier et vivre chaque jour",
     "kicker": "Prier et vivre chaque jour",
     "title": "Travail monastique",
-    "hero": ("fourche", "Les frères au travail à la fourche"),
+    "hero": ("bro-tracteur", "Le tracteur devant les bottes de foin"),
     "blocks": [
         ("lead", "Saint Benoît est réaliste. Appelé à une aventure extraordinaire – vivre proche de Dieu et collaborer à l’œuvre du salut –, le moine reste un homme ordinaire. L’idéal de sa vocation, il le réalise au milieu des exigences communes à toute vie humaine. Ainsi, pour vivre, doit-il travailler."),
         ("img", "travail-1", "Travail monastique", None),
@@ -341,7 +343,7 @@ PAGES["travail"] = {
         ("imgs", [("travail-3", "Travail à l’atelier"), ("wa-champ", "Frères au travail dans les champs")]),
         ("p", "Le travail manuel en équipe procure le sens du sacrifice. Savoir payer de sa personne, s’oublier, donner son temps et sa fatigue, sans espérer de louange. Ce dévouement que donne la vie concrète, les livres peuvent le faire oublier. C’est pourtant là une attitude essentielle. En même temps, le travail est apprentissage de la vie commune. C’est le lieu par excellence où cristallisent les relations fraternelles. Ainsi, en plus du courage et de la ténacité, du sens du réel et de la responsabilité, le travail inculque au moine l’attention aux autres, la délicatesse, la générosité, la patience. Toutes qualités dont l’absence pourrait compromettre sa vie de prière. Mais il n’acquiert pas forcément ces qualités, ni même d’abord, sur ce terrain-là."),
         ("quote", "La grandeur d’un métier est peut-être, avant tout, d’unir des hommes.", "Antoine de Saint-Exupéry"),
-        ("img", "travail-4", "Travail des frères", None),
+        ("imgs", [("bro-tronconneuse", "Un frère au travail du bois"), ("bro-verger", "Les allées du verger")]),
         ("h2", "Concrètement, le travail à Sept-Fons"),
         ("p", "La part lucrative du travail, celle qui garantit à la communauté sa subsistance matérielle, repose pour l’essentiel sur l’activité de notre atelier de confitures et celle du Moulin de La Trappe. Cette petite PME fabrique, conditionne et expédie toute la gamme de nos compléments alimentaires. Ce sont des dérivés de la fameuse Germalyne, notre produit phare à base de germe de blé, mis au point dans les années 1930. Ces deux emplois occupent à eux seuls une bonne douzaine de frères. Quelques six ouvriers y travaillent matin et soir."),
         ("img", "travail-5", "L’atelier de confitures", None),
@@ -349,7 +351,7 @@ PAGES["travail"] = {
         ("p", "L’autre part du travail est plus « gratuite ». Si l’on excepte les tâches domestiques (cuisine, buanderie, vestiaire, divers entretiens et nettoyages), c’est principalement le travail de la terre – dans la grande tradition trappiste – qui assure cette fonction."),
         ("imgs", [("wa-maraichage", "Les frères au maraîchage"), ("wa-recolte", "Un frère à la récolte")]),
         ("p", "Avec quelques 100 hectares de surfaces agricoles, ce n’est pas la besogne qui manque ! Celle-ci comprend l’élevage et la traite d’un troupeau de vaches normandes (80 têtes de bétail environ), dont le lait est destiné à la transformation fromagère. Elle comprend aussi les cultures nécessaires à l’affourragement du bétail (maïs, céréales, légumineuses, foin) et au paillage des litières."),
-        ("img", "travail-7", "Le troupeau", None),
+        ("imgs", [("bro-fourche", "Les frères au travail à la fourche"), ("bro-hangar", "Un frère dans le hangar agricole")]),
         ("p", "L’excédent de production est vendu à l’extérieur. Les productions maraîchères et fruitières du potager et du verger viennent agrémenter de produits frais de saison la table des moines et celle des hôtes. Enfin, elle inclut l’entretien des bosquets, des chemins, des haies et des espaces verts… Dans une communauté nombreuse, constituée majoritairement d’hommes jeunes, dans la force de l’âge, cette forme de travail revêt une importance particulière."),
         ("img", "travail-8", "Les champs de l’abbaye", None),
     ],
@@ -361,7 +363,7 @@ PAGES["horaires"] = {
     "nav": "Prier et vivre chaque jour",
     "kicker": "Venir à Sept-Fons",
     "title": "Horaires des offices religieux",
-    "hero": ("horaires-cloches", "Les cloches de l’abbaye"),
+    "hero": ("bro-cloche", "Un frère sonne la cloche"),
     "blocks": [
         ("lead", "Les offices religieux, dont la messe, sont accessibles au public excepté les matines qui ne sont accessibles qu’aux retraitants. En dehors des heures d’ouverture de la boutique et donc de la présence du frère portier, le monastère est fermé au public. Autrement dit, si vous voulez assister à un office, veuillez consulter les horaires d’ouverture de la porterie."),
         ("tables", [
@@ -402,7 +404,7 @@ PAGES["horaires"] = {
         ("p", "DIMANCHE : 10 h 20 : Tierce suivie de la messe du Jour de Pâques"),
         ("h3", "LUNDI DE PÂQUES"),
         ("p", "Horaire du dimanche, le matin:\nLa messe à 10h20"),
-        ("img", "horaires-hotes", "Des hôtes dans l’église", None),
+        ("imgs", [("horaires-hotes", "Des hôtes dans l’église"), ("bro-orgue", "L’orgue pendant l’office")]),
         ("anchor", "magasin"),
         ("h2", "Visitez notre magasin"),
         ("p", "À l’entrée du monastère se trouvent la porterie et un magasin qui vend nos produits et ceux d’autres monastères. Vous y trouverez aussi un grand choix d’articles religieux (chapelets, statues, croix, icônes, médailles…) et une librairie religieuse. La porterie est fermée pendant les offices."),
@@ -589,7 +591,7 @@ PAGES["cd"] = {
     "nav": None,
     "kicker": "Album",
     "title": "Possibilités et mélodies",
-    "hero": ("cd-2", "Vitrail de la Vierge à l’Enfant"),
+    "hero": ("bro-vitrail", "Vitrail de la Vierge à l’Enfant"),
     "blocks": [
         ("linkrow", [("Téléchargement", OLD + "/cd/telechargement/"), ("Livret", OLD + "/cd/livret/"),
                      ("Témoignage", OLD + "/cd/temoignage/"), ("Historique", OLD + "/cd/historique/"), ("CZ", OLD + "/cd/cz/")]),
@@ -620,6 +622,7 @@ MORE = [
         ("Contacts", "contact.html"),
     ]),
     ("Découvrir", [
+        ("L’abbaye en images", "photos.html"),
         ("Histoire de l’Abbaye", "histoire.html"),
         ("La croix de nos martyrs", "martyrs.html"),
         ("Filiation", "filiation.html"),
@@ -638,6 +641,7 @@ UTILITY = [("Hôtellerie", "hotellerie.html"), ("Boutique", SHOP_URL), ("Album",
 
 FOOTER_LINKS = [
     ("L’abbaye", [
+        ("L’abbaye en images", "photos.html"),
         ("Histoire de l’Abbaye", "histoire.html"),
         ("La croix de nos martyrs", "martyrs.html"),
         ("Filiation", "filiation.html"),
@@ -662,3 +666,63 @@ FOOTER_LINKS = [
 
 LANGS = [("fr", "Français"), ("en", "English"), ("de", "Deutsch"), ("es", "Español"),
          ("it", "Italiano"), ("cs", "Čeština"), ("pl", "Polski")]
+
+
+# ----- Nouvelle page : L'abbaye en images (photographies de la brochure et des frères) -----
+PAGES["photos"] = {
+    "nav": None,
+    "kicker": "L’abbaye",
+    "title": "L’abbaye en images",
+    "hero": ("bro-champs", "Les terres de l’abbaye vues du ciel"),
+    "blocks": [],
+    "gallery": [
+        ("Prier", [
+            ("bro-office", "Les frères dans les stalles, à l’office"),
+            ("bro-oraison", "La communauté à genoux dans l’église"),
+            ("bro-messe", "La messe conventuelle"),
+            ("bro-crucifix", "Le crucifix devant les vitraux"),
+            ("bro-elevation", "L’élévation pendant la messe"),
+            ("bro-cierges", "Un frère à l’autel, entre les cierges"),
+            ("bro-prostration", "Un frère prosterné dans l’église"),
+            ("bro-orgue", "L’orgue pendant l’office"),
+            ("bro-vitrail", "Vitrail de la Vierge à l’Enfant"),
+            ("bro-chapelle", "L’office dans une chapelle"),
+            ("bro-lecture", "Un frère en lecture"),
+            ("wa-psautier", "Le psautier ouvert dans les stalles"),
+        ]),
+        ("Vivre avec des frères", [
+            ("bro-cloitre", "Les frères dans le cloître"),
+            ("bro-refectoire", "Le réfectoire"),
+            ("bro-livre", "Un frère seul avec son livre, dans la lumière"),
+            ("bro-fenetre", "Un frère près d’une fenêtre"),
+            ("bro-cloche", "Un frère sonne la cloche"),
+            ("bro-sacristie", "À la sacristie"),
+            ("bro-cellules", "Le dortoir"),
+            ("bro-atelier", "Un jeune frère à l’atelier"),
+            ("vaisselle", "La vaisselle partagée"),
+            ("wa-sortie", "Les frères sur une allée du domaine"),
+            ("silhouettes", "Deux moines dans la lumière"),
+        ]),
+        ("Travailler", [
+            ("bro-fourche", "Les frères au travail à la fourche"),
+            ("bro-tracteur", "Le tracteur devant les bottes de foin"),
+            ("bro-tronconneuse", "Un frère au travail du bois"),
+            ("bro-hangar", "Un frère dans le hangar agricole"),
+            ("bro-verger", "Les allées du verger"),
+            ("wa-maraichage", "Les frères au maraîchage"),
+            ("wa-mains", "Le travail à l’atelier"),
+            ("travail-2", "En cuisine"),
+        ]),
+        ("Le domaine", [
+            ("bro-champs", "Les terres de l’abbaye vues du ciel"),
+            ("aerienne", "Vue aérienne de l’abbaye"),
+            ("wa-coquelicots", "Un champ de coquelicots"),
+            ("wa-clocher", "Le clocher dans les arbres"),
+            ("wa-tour", "La tour de l’enceinte"),
+            ("contact-ble", "Les champs de blé"),
+            ("wa-couchant", "Un chemin dans la lumière du soir"),
+        ]),
+    ],
+    "next": [("Histoire de l’Abbaye", "histoire.html"), ("Hôtellerie", "hotellerie.html")],
+}
+PAGE_ORDER.append("photos")

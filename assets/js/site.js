@@ -61,6 +61,27 @@
   var cur = document.querySelector('.main-nav [aria-current]');
   if (cur && cur.scrollIntoView && window.innerWidth < 760) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
 
+  /* Visionneuse de la page « L'abbaye en images » */
+  var shots = Array.prototype.slice.call(document.querySelectorAll('[data-lightbox]'));
+  if (shots.length && window.HTMLDialogElement) {
+    var lb = document.createElement('dialog'); lb.className = 'lightbox'; lb.setAttribute('aria-label', 'Photographie');
+    lb.innerHTML = '<img alt=""><p></p><button class="lb-btn lb-prev" type="button" aria-label="Photo précédente">‹</button>' +
+      '<button class="lb-btn lb-next" type="button" aria-label="Photo suivante">›</button><button class="lb-btn lb-close" type="button" aria-label="Fermer">×</button>';
+    document.body.appendChild(lb);
+    var lbImg = lb.querySelector('img'), lbCap = lb.querySelector('p'), at = 0;
+    var show = function (i) {
+      at = (i + shots.length) % shots.length;
+      var a = shots[at], im = a.querySelector('img');
+      lbImg.src = a.getAttribute('href'); lbImg.alt = im ? im.alt : ''; lbCap.textContent = im ? im.alt : '';
+    };
+    shots.forEach(function (a, i) { a.addEventListener('click', function (e) { e.preventDefault(); show(i); lb.showModal(); }); });
+    lb.querySelector('.lb-prev').addEventListener('click', function () { show(at - 1); });
+    lb.querySelector('.lb-next').addEventListener('click', function () { show(at + 1); });
+    lb.querySelector('.lb-close').addEventListener('click', function () { lb.close(); });
+    lb.addEventListener('click', function (e) { if (e.target === lb) lb.close(); });
+    lb.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') show(at - 1); if (e.key === 'ArrowRight') show(at + 1); });
+  }
+
   /* Apparitions douces (versions avec la classe .anim) */
   var reveals = document.querySelectorAll('.anim .reveal');
   if ('IntersectionObserver' in window && reveals.length) {

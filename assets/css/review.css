@@ -87,3 +87,5 @@ html.rv-on #rv-ui button, html.rv-on .rv-pin { cursor:pointer !important; }
 .rv-wbox p { margin:0; }
 .rv-wt { font-size:20px !important; font-weight:600 !important; }
 .rv-wl { font-size:13px !important; font-weight:600 !important; margin-top:4px; }
+.rv-status { margin:0; font-size:13.5px !important; color:var(--rv-like); }
+.rv-status.rv-warn { color:var(--rv-dis); }

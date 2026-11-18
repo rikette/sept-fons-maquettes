@@ -9,6 +9,8 @@ import html, os, re, shutil, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from content import *  # noqa
 import content_en as EN
+import time
+ASSET_V = time.strftime("%Y%m%d%H%M")  # numéro de version des CSS/JS : les navigateurs rechargent après chaque mise à jour
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = "../assets/img/"
@@ -281,8 +283,8 @@ def shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_js="
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?{t['fonts']}&display=swap">
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="../assets/css/base.css?v={ASSET_V}">
+<link rel="stylesheet" href="theme.css?v={ASSET_V}">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body class="{t['cls']} menu-{t['menu']} {body_cls}">
@@ -292,7 +294,7 @@ def shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_js="
 {body}
 </main>
 {footer(lang)}
-<script src="../assets/js/site.js" defer></script>{extra_js}
+<script src="../assets/js/site.js?v={ASSET_V}" defer></script>{extra_js}
 {review_tags("../")}
 </body>
 </html>
@@ -367,6 +369,19 @@ def home(H, lang="fr"):
 """
 
 
+def gallery(p):
+    if not p.get("gallery"):
+        return ""
+    out = ['<section class="gallery" aria-label="Photographies">']
+    for title, photos in p["gallery"]:
+        out.append(f'<h2 class="g-title">{inl(title)}</h2><div class="g-grid">')
+        for key, alt in photos:
+            out.append(f'<a class="g-item" href="{IMG}{key}.jpg" data-lightbox>{img(key, alt)}</a>')
+        out.append("</div>")
+    out.append("</section>")
+    return "".join(out)
+
+
 def page(p):
     nxt = "".join(f'<a href="{h}"><small>Pour continuer</small><span>{inl(l)}</span></a>' for l, h in p["next"])
     return f"""
@@ -380,6 +395,7 @@ def page(p):
 <article class="prose">
 {render_blocks(p["blocks"])}
 </article>
+{gallery(p)}
 <nav class="next" aria-label="Pour continuer">{nxt}</nav>
 """
 
@@ -553,6 +569,7 @@ def mq_page(p):
 <article class="prose">
 {render_blocks(p["blocks"])}
 </article>
+{gallery(p)}
 <nav class="next" aria-label="Pour continuer"><p>Pour continuer</p>{nxt}</nav>
 """
 
@@ -570,7 +587,7 @@ def mq_shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_j
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?{t['fonts']}&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v={ASSET_V}">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body class="{body_cls}">
@@ -580,7 +597,7 @@ def mq_shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_j
 {body}
 </main>
 {footer(lang)}
-<script src="../assets/js/site.js" defer></script>{extra_js}
+<script src="../assets/js/site.js?v={ASSET_V}" defer></script>{extra_js}
 {review_tags("../")}
 </body>
 </html>
@@ -618,8 +635,8 @@ def main():
     chooser()
 
 
-THUMBS = {"1-maquette-des-freres": "vaisselle", "4-nocturne": "office-nuit", "3-noir-et-blanc": "wa-cloitre", "7-ivoire": "frere-livre",
-          "5-matines": "wa-eglise", "6-terre": "fourche", "2-sept-fons": "eglise-choeur", "8-silence": "wa-couchant"}
+THUMBS = {"1-maquette-des-freres": "vaisselle", "4-nocturne": "bro-office", "3-noir-et-blanc": "bro-cloitre", "7-ivoire": "bro-livre",
+          "5-matines": "wa-eglise", "6-terre": "bro-fourche", "2-sept-fons": "eglise-choeur", "8-silence": "wa-couchant"}
 MENU_LABEL = {"mega": "Menu des consignes + rubrique « L’abbaye »", "utility": "Menu des consignes + barre d’accès direct",
               "simple": "Menu des consignes uniquement",
               "drawer": "Menu des consignes + menu à gauche pour tout le reste",
@@ -628,14 +645,24 @@ MENU_LABEL = {"mega": "Menu des consignes + rubrique « L’abbaye »", "utility
 
 # Destinataire du courriel préparé par « Envoyer mes remarques » (vide : seul le fichier est téléchargé)
 REVIEW_EMAIL = ""
+# Adresse de l'application Web Google Apps Script (_build/google-apps-script.gs) : remarques partagées en ligne
+REVIEW_ENDPOINT = ""
 
 
 def review_tags(prefix):
-    return (f'<link rel="stylesheet" href="{prefix}assets/css/review.css">\n'
-            f'<script src="{prefix}assets/js/review.js" data-email="{html.escape(REVIEW_EMAIL)}" defer></script>')
+    return (f'<link rel="stylesheet" href="{prefix}assets/css/review.css?v={ASSET_V}">\n'
+            f'<script src="{prefix}assets/js/review.js?v={ASSET_V}" data-email="{html.escape(REVIEW_EMAIL)}" data-endpoint="{html.escape(REVIEW_ENDPOINT)}" defer></script>')
 
 
 def chooser():
+    if REVIEW_ENDPOINT:
+        HOWTO_END = ("<li>C’est tout : vos remarques sont enregistrées aussitôt, signées de votre prénom.</li></ol>\n"
+                     "<p class=\"small\">Chaque frère voit les remarques des autres (pastilles sur la page, liste sous <b>☰</b>). "
+                     "Le bouton <b>◉</b> masque ou affiche les remarques.</p>")
+    else:
+        HOWTO_END = ("<li>Une fois terminé, cliquez sur <b>☰</b> puis <b>Envoyer les remarques</b> : un fichier est enregistré dans vos Téléchargements.</li></ol>\n"
+                     "<p class=\"small\">Ce fichier peut passer de frère en frère : chacun l’ouvre (<b>☰</b> › « Ouvrir un fichier de remarques reçu »), "
+                     "voit les remarques des autres, ajoute les siennes et le transmet. Le bouton <b>◉</b> masque ou affiche les remarques.</p>")
     cards = "".join(
         f'<a class="card" href="{t["folder"]}/index.html" target="_blank" rel="noopener"><div class="thumb" style="background-image:url(assets/img/{THUMBS[t["folder"]]}.jpg)"></div>'
         f'<div class="body"><span class="n">Version {i}</span><h2>{t["name"]}</h2><p>{html.escape(t["desc"])}</p>'
@@ -664,8 +691,7 @@ footer{{padding-top:2rem;padding-bottom:4rem;border-top:1px solid var(--line);co
 <div class="howto"><p class="lede">Ouvrez une version, puis donnez votre avis directement sur la page :</p>
 <ol><li>Cliquez sur <b>✎ Commenter</b>, en bas à droite.</li>
 <li>Cliquez sur l’élément de votre choix (titre, photo, menu, bouton…) : <b>👍 J’aime</b> ou <b>👎 Je n’aime pas</b>, et ajoutez une remarque si vous le souhaitez.</li>
-<li>Une fois terminé, cliquez sur <b>☰</b> puis <b>Envoyer les remarques</b> : un fichier est enregistré dans vos Téléchargements.</li></ol>
-<p class="small">Ce fichier peut passer de frère en frère : chacun l’ouvre (<b>☰</b> › « Ouvrir un fichier de remarques reçu »), voit les remarques des autres, ajoute les siennes et le transmet. Le bouton <b>◉</b> masque ou affiche les remarques.</p></div></header>
+{HOWTO_END}</div></header>
 <main>{cards}</main>
 {review_tags("")}
 </body></html>

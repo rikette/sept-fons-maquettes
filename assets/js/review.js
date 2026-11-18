@@ -1,10 +1,14 @@
-/* Remarques des frères : cliquer un élément pour dire « j'aime », « je n'aime pas » ou laisser une remarque.
-   Tout reste dans ce navigateur (localStorage) ; « Envoyer mes remarques » produit un fichier à renvoyer. */
+/* Remarques des frères : cliquer un élément pour dire « j'aime », « je n'aime pas » et laisser une remarque.
+   En ligne (data-endpoint renseigné) : les remarques sont enregistrées dans un Google Sheet et partagées entre les frères.
+   Sinon : elles restent dans ce navigateur (localStorage) et « Envoyer les remarques » produit un fichier. */
 (function () {
   'use strict';
   var KEY = 'septfons-remarques-v1';
   var script = document.currentScript || document.querySelector('script[src*="review.js"]');
   var EMAIL = (script && script.getAttribute('data-email')) || '';
+  /* En ligne : adresse de l'application Google Apps Script qui enregistre les remarques dans un Google Sheet */
+  var ENDPOINT = (script && script.getAttribute('data-endpoint')) || '';
+  var ONLINE = !!ENDPOINT;
 
   /* ---------- où sommes-nous ? ---------- */
   var parts = decodeURIComponent(location.pathname).replace(/\\/g, '/').split('/').filter(Boolean);
@@ -20,10 +24,10 @@
 
   /* ---------- stockage ---------- */
   var storeOk = true, S;
-  function blank() { return { name: '', items: [], imported: [], hidden: false }; }
+  function blank() { return { name: '', items: [], imported: [], queue: [], hidden: false }; }
   function load() {
     try { S = JSON.parse(localStorage.getItem(KEY)) || blank(); } catch (e) { storeOk = false; S = blank(); }
-    S.items = S.items || []; S.imported = S.imported || [];
+    S.items = S.items || []; S.imported = S.imported || []; S.queue = S.queue || [];
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); storeOk = true; } catch (e) { storeOk = false; }
@@ -31,6 +35,37 @@
   }
   load();
   window.addEventListener('storage', function (e) { if (e.key === KEY) { load(); render(); } });
+
+  /* ---------- en ligne : envoi des remarques et lecture de celles des autres ---------- */
+  var net = { busy: false, ok: null, last: 0 };
+  function queue(op) { if (!ONLINE) return; S.queue.push(op); flush(); }
+  function flush() {
+    if (!ONLINE || net.busy || !S.queue.length) return;
+    net.busy = true;
+    fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(S.queue[0]) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d || !d.ok) throw new Error(d && d.error); S.queue.shift(); net.ok = true; net.busy = false; save(); flush(); })
+      .catch(function () { net.ok = false; net.busy = false; render(); setTimeout(flush, 20000); });
+  }
+  function pull() {
+    if (!ONLINE) return;
+    fetch(ENDPOINT + (ENDPOINT.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) throw new Error();
+        var mine = {}, pendingDel = {};
+        S.items.forEach(function (c) { mine[c.id] = 1; });
+        S.queue.forEach(function (op) { if (op.op === 'delete') pendingDel[op.id] = 1; });
+        var others = [];
+        d.items.forEach(function (c) {
+          if (mine[c.id] || pendingDel[c.id]) return;
+          if (S.name && c.auteur === S.name) { S.items.push(c); return; }   // ses remarques laissées sur un autre appareil
+          c.imported = true; others.push(c);
+        });
+        S.imported = others; net.ok = true; net.last = Date.now(); save();
+      })
+      .catch(function () { net.ok = false; render(); });
+  }
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function all() { return S.items.concat(S.imported); }
@@ -182,16 +217,20 @@
           var verdict = cur.verdict || (ta.value.trim() ? 'note' : '');
           if (!verdict) { err.textContent = 'Choisissez « J’aime » ou « Je n’aime pas », ou écrivez une remarque.'; err.hidden = false; return; }
           cur.verdict = verdict;
-          if (item) { item.verdict = cur.verdict; item.texte = ta.value.trim(); item.modifie = new Date().toISOString(); }
-          else {
+          if (item) {
+            item.verdict = cur.verdict; item.texte = ta.value.trim(); item.modifie = new Date().toISOString();
+            queue({ op: 'update', id: item.id, verdict: item.verdict, texte: item.texte });
+          } else {
             var dd = describe(el);
-            S.items.push({ id: uid(), auteur: S.name, version: VERSION, page: PAGE, path: HERE, titre_page: document.title,
-              selecteur: cssPath(el), element: dd.kind, extrait: dd.text, image: dd.img || undefined, verdict: cur.verdict,
+            var it = { id: uid(), auteur: S.name, version: VERSION, page: PAGE, path: HERE, titre_page: document.title,
+              selecteur: cssPath(el), element: dd.kind, extrait: dd.text, image: dd.img || '', verdict: cur.verdict,
               texte: ta.value.trim(), ecran: innerWidth < 760 ? 'téléphone' : (innerWidth < 1100 ? 'tablette' : 'ordinateur'),
-              largeur: innerWidth, date: new Date().toISOString() });
+              largeur: innerWidth, date: new Date().toISOString() };
+            S.items.push(it); queue({ op: 'add', item: it });
           }
-          if (S.items.length) S.items.forEach(function (c) { if (!c.auteur) c.auteur = S.name; });
-          S.hidden = false; closeBubble(); save(); flashTip('Remarque enregistrée. Elle reste dans ce navigateur jusqu’à l’envoi.');
+          S.items.forEach(function (c) { if (!c.auteur) c.auteur = S.name; });
+          S.hidden = false; closeBubble(); save();
+          flashTip(ONLINE ? 'Remarque enregistrée. Les autres frères la voient.' : 'Remarque enregistrée. Elle reste dans ce navigateur jusqu’à l’envoi.');
         } })
       ]);
       b.appendChild(act);
@@ -208,7 +247,7 @@
     b.style.top = Math.max(12, Math.min(top, innerHeight - bh - 12)) + 'px';
     var f = b.querySelector('input, .rv-v[aria-checked="true"], .rv-v, button'); if (f) f.focus({ preventScroll: true });
   }
-  function remove(id) { S.items = S.items.filter(function (c) { return c.id !== id; }); S.imported = S.imported.filter(function (c) { return c.id !== id; }); save(); }
+  function remove(id) { if (S.items.some(function (c) { return c.id === id; })) queue({ op: 'delete', id: id }); S.items = S.items.filter(function (c) { return c.id !== id; }); S.imported = S.imported.filter(function (c) { return c.id !== id; }); save(); }
   var tipT;
   function flashTip(msg) {
     tip.textContent = msg; tip.hidden = false; clearTimeout(tipT);
@@ -242,7 +281,7 @@
   var filter = 'page';
   function togglePanel(force) {
     var open = force != null ? force : panel.hidden;
-    panel.hidden = !open; if (open) { closeBubble(); renderPanel(); }
+    panel.hidden = !open; if (open) { closeBubble(); renderPanel(); if (ONLINE && Date.now() - net.last > 5000) pull(); }
   }
   function goto(c) {
     if (c.path === HERE) {
@@ -286,12 +325,25 @@
         h('div', { class: 'rv-ia' }, [
           h('button', { type: 'button', class: 'rv-link', text: c.path === HERE ? 'Voir' : 'Aller à la page', onclick: function () { goto(c); } }),
           !c.imported && c.path === HERE ? h('button', { type: 'button', class: 'rv-link', text: 'Modifier', onclick: function () { var el = find(c.selecteur) || document.body; togglePanel(false); el.scrollIntoView({ block: 'center' }); setTimeout(function () { openBubble(el, c); }, 60); } }) : null,
-          h('button', { type: 'button', class: 'rv-link rv-del', text: c.imported ? 'Retirer' : 'Supprimer', onclick: function () { if (confirm('Supprimer cette remarque ?')) remove(c.id); } })
+          ONLINE && c.imported ? null : h('button', { type: 'button', class: 'rv-link rv-del', text: c.imported ? 'Retirer' : 'Supprimer', onclick: function () { if (confirm('Supprimer cette remarque ?')) remove(c.id); } })
         ])
       ]));
     });
     if (!shown.length) ul.appendChild(h('li', { class: 'rv-empty', text: filter === 'page' ? 'Aucune remarque sur cette page. Cliquez « ✎ Commenter », puis sur un élément.' : 'Aucune remarque pour l’instant.' }));
     panel.appendChild(ul);
+    if (ONLINE) {
+      var st = S.queue.length ? '⏳ ' + S.queue.length + ' remarque(s) en cours d’envoi' + (net.ok === false ? ' : connexion impossible, nouvel essai dans un instant.' : '…')
+        : (net.ok === false ? '⚠ Connexion impossible : vos remarques sont gardées et partiront dès que possible.' : '✓ Vos remarques sont enregistrées en ligne. Tous les frères les voient.');
+      panel.appendChild(h('div', { class: 'rv-pf' }, [
+        h('p', { class: 'rv-status' + (net.ok === false ? ' rv-warn' : ''), text: st }),
+        h('div', { class: 'rv-pm' }, [
+          h('button', { type: 'button', class: 'rv-link', text: 'Actualiser', onclick: pull }),
+          h('button', { type: 'button', class: 'rv-link', text: 'Télécharger toutes les remarques', onclick: exportAll }),
+          S.name ? h('button', { type: 'button', class: 'rv-link', text: 'Changer de prénom', onclick: function () { var n = prompt('Votre prénom', S.name); if (n && n.trim()) { S.name = n.trim(); save(); } } }) : null
+        ])
+      ]));
+      return;
+    }
     var fileIn = h('input', { type: 'file', accept: '.json,application/json', multiple: '', hidden: '', onchange: function () { importFiles(fileIn.files); } });
     panel.appendChild(h('div', { class: 'rv-pf' }, [
       h('button', { type: 'button', class: 'rv-b rv-main rv-send', text: 'Envoyer les remarques (' + (S.items.length + S.imported.length) + ')', onclick: exportAll }),
@@ -312,13 +364,13 @@
   function safe(s) { return (s || 'frere').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').toLowerCase(); }
   function exportAll() {
     if (!S.items.length && !S.imported.length) { alert('Il n’y a encore aucune remarque.'); return; }
-    if (!S.name) askName();
+    if (!S.name && !ONLINE) askName();
     var data = { format: 'septfons-remarques', version: 1, auteur: S.name, exporte_le: new Date().toISOString(), navigateur: navigator.userAgent, remarques: S.items.concat(S.imported).map(function (c) { var o = {}; for (var k in c) if (k !== 'imported') o[k] = c[k]; return o; }) };
-    var name = 'remarques-' + safe(S.name) + '-' + stamp() + '.json';
+    var name = (ONLINE ? 'remarques-tous-' : 'remarques-' + safe(S.name) + '-') + stamp() + '.json';
     var url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
     var a = h('a', { href: url, download: name }); document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-    if (EMAIL) {
+    if (EMAIL && !ONLINE) {
       var counts = { like: 0, dislike: 0, note: 0 }; S.items.forEach(function (c) { counts[c.verdict]++; });
       var body = 'Bonjour,\n\nVoici mes remarques sur les maquettes du site (' + S.items.length + ' remarques : ' + counts.like + ' j’aime, ' + counts.dislike + ' je n’aime pas, ' + counts.note + ' remarques).\n\n' +
         '>>> Merci de joindre à ce courriel le fichier « ' + name + ' » qui vient d’être enregistré dans vos Téléchargements. <<<\n\n' + S.name;
@@ -347,7 +399,7 @@
   /* ---------- rendu ---------- */
   function render() {
     var n = S.items.length + S.imported.length, here = onPage(all()).length;
-    bList.textContent = '☰ ' + (here ? here + ' ici · ' : '') + n;
+    bList.textContent = '☰ ' + (here ? here + ' ici · ' : '') + n + (ONLINE && S.queue.length ? ' ⏳' : '');
     bList.setAttribute('aria-label', 'Remarques : ' + here + ' sur cette page, ' + n + ' en tout');
     bEye.textContent = S.hidden ? '◌' : '◉';
     bEye.setAttribute('aria-pressed', String(!S.hidden));
@@ -362,7 +414,7 @@
     if (S.name || document.querySelector('.rv-welcome')) return;
     var inp = h('input', { type: 'text', class: 'rv-in', placeholder: 'Votre prénom', 'aria-label': 'Votre prénom', autocomplete: 'given-name' });
     var fileIn = h('input', { type: 'file', accept: '.json,application/json', multiple: '', hidden: '', onchange: function () { ok(); importFiles(fileIn.files); } });
-    function ok() { var n = inp.value.trim(); if (!n) { inp.focus(); return false; } S.name = n; w.remove(); save(); return true; }
+    function ok() { var n = inp.value.trim(); if (!n) { inp.focus(); return false; } S.name = n; w.remove(); save(); pull(); return true; }
     var w = h('div', { class: 'rv-welcome', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Bienvenue' }, [h('form', { class: 'rv-wbox', onsubmit: function (e) { e.preventDefault(); if (ok()) flashTip('Merci ' + S.name + '. Cliquez « ✎ Commenter » pour donner votre avis.'); } }, [
       h('strong', { class: 'rv-wt', text: 'Bienvenue' }),
       h('p', { text: 'Vous pouvez donner votre avis directement sur ces maquettes : cliquez « ✎ Commenter » en bas à droite, puis sur un élément de la page.' }),
@@ -372,6 +424,7 @@
         h('span', { class: 'rv-sp' }),
         h('button', { type: 'submit', class: 'rv-b rv-main', text: 'Commencer' })
       ]),
+      ONLINE ? h('p', { class: 'rv-help', text: 'Vos remarques sont partagées : chaque frère voit celles des autres, signées de leur prénom.' }) :
       h('p', { class: 'rv-help' }, ['Un frère vous a transmis un fichier de remarques ? ',
         h('button', { type: 'button', class: 'rv-link', text: 'Ouvrez-le ici', onclick: function () { if (!inp.value.trim()) { inp.focus(); inp.placeholder = 'Votre prénom d’abord'; return; } fileIn.click(); } }), fileIn])
     ])]);
@@ -380,7 +433,12 @@
   function start() {
     document.body.appendChild(pins); document.body.appendChild(hover); document.body.appendChild(ui);
     tip.hidden = true; render();
-    if (!S.name && storeOk) setTimeout(welcome, 600);
+    if (!S.name && (storeOk || ONLINE)) setTimeout(welcome, 600);
+    if (ONLINE) {
+      pull(); flush();
+      setInterval(function () { if (!document.hidden) pull(); }, 30000);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - net.last > 10000) pull(); });
+    }
     var m = /#rv=([\w]+)/.exec(location.hash);
     if (m) { var c = all().filter(function (x) { return x.id === m[1]; })[0]; if (c) setTimeout(function () { history.replaceState(null, '', location.pathname + location.search); goto(c); }, 400); }
     try { if (sessionStorage.getItem('rv-mode')) setMode(true); } catch (e) {}
