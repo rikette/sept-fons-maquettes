@@ -19,6 +19,35 @@
     return fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(op) })
       .then(function (r) { return r.json(); }).then(function (d) { if (!d || !d.ok) throw new Error(); });
   }
+  var editing = '';
+  function editor(c) {
+    var verdict = c.verdict;
+    var ta = h('textarea', { class: 'ed-t', rows: '3', 'aria-label': 'Remarque' }); ta.value = c.texte || '';
+    var msg = h('span', { class: 'ed-m' });
+    var vb = ['like', 'dislike'].map(function (v) {
+      return h('button', { type: 'button', class: 'ed-v', 'aria-pressed': String(verdict === v), text: ICON[v] + ' ' + VERB[v], onclick: function () {
+        verdict = verdict === v ? '' : v;
+        vb.forEach(function (b, i) { b.setAttribute('aria-pressed', String(verdict === ['like', 'dislike'][i])); });
+      } });
+    });
+    var save = h('button', { type: 'button', class: 'ed-s', text: 'Enregistrer', onclick: function () {
+      var texte = ta.value.trim();
+      var v = verdict === 'like' || verdict === 'dislike' ? verdict : (texte ? 'note' : '');
+      if (!v) { msg.textContent = 'Choisissez « J’aime » ou « Je n’aime pas », ou écrivez une remarque.'; return; }
+      save.disabled = true; msg.textContent = 'Enregistrement…';
+      (ENDPOINT ? post({ op: 'update', id: c.id, verdict: v, texte: texte }) : Promise.resolve())
+        .then(function () {
+          c.verdict = v; c.texte = texte; c.modifie = new Date().toISOString(); editing = '';
+          $('#status').textContent = 'Remarque modifiée à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ' : tous les frères la voient.';
+          render();
+        })
+        .catch(function () { save.disabled = false; msg.textContent = 'La modification n’a pas pu être enregistrée. Vérifiez la connexion, puis recommencez.'; });
+    } });
+    var cancel = h('button', { type: 'button', text: 'Annuler', onclick: function () { editing = ''; render(); } });
+    setTimeout(function () { ta.focus(); }, 0);
+    return h('div', { class: 'ed' }, [h('div', { class: 'ed-row' }, vb), ta, h('div', { class: 'ed-row' }, [save, cancel, msg])]);
+  }
+
   function decide(c, val) {
     var id = 'choix-' + c.id, now = new Date().toISOString();
     var exists = !!dec[c.id];
@@ -143,11 +172,14 @@
             h('div', { class: 'ih' }, [
               h('span', { class: 'verdict', text: (ICON[c.verdict] || '') + ' ' + (VERB[c.verdict] || '') }),
               h('span', { class: 'who', text: c.auteur || 'anonyme' }),
-              h('span', { class: 'when', text: when(c.date) + (c.ecran ? ' · ' + c.ecran : '') })
+              h('span', { class: 'when', text: when(c.date) + (c.ecran ? ' · ' + c.ecran : '') + (c.modifie ? ' · modifiée' : '') })
             ]),
             h('div', { class: 'el', text: c.element + (c.extrait ? ' — « ' + c.extrait + ' »' : '') }),
-            c.texte ? h('p', { class: 'txt', text: c.texte }) : null,
-            h('a', { class: 'see', href: href + '#rv=' + c.id, target: '_blank', rel: 'noopener', text: 'Voir sur la page →' }),
+            editing === c.id ? editor(c) : (c.texte ? h('p', { class: 'txt', text: c.texte }) : null),
+            h('div', { class: 'acts' }, [
+              h('a', { class: 'see', href: href + '#rv=' + c.id, target: '_blank', rel: 'noopener', text: 'Voir sur la page →' }),
+              editing === c.id ? null : h('button', { type: 'button', class: 'edit', text: '✎ Modifier', onclick: function () { editing = c.id; render(); } })
+            ]),
             choice
           ]));
         });
@@ -176,5 +208,5 @@
   $('#refresh').addEventListener('click', load);
   $('#csv').addEventListener('click', csv);
   load();
-  setInterval(function () { if (!document.hidden && ENDPOINT) load(); }, 60000);
+  setInterval(function () { if (!document.hidden && ENDPOINT && !editing) load(); }, 60000);
 })();

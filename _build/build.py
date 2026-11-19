@@ -855,7 +855,15 @@ input{{flex:1 1 12rem}}
 .verdict{{font-weight:600}}.who{{font-weight:500}}.when{{color:var(--ink-2);font-size:.82rem}}
 .el{{color:var(--ink-2);font-size:.88rem;margin-top:.2rem}}
 .txt{{margin:.45rem 0 0;white-space:pre-wrap}}
-.see{{display:inline-block;margin-top:.4rem;font-size:.85rem;color:var(--accent)}}
+.see{{display:inline-block;font-size:.85rem;color:var(--accent)}}
+.acts{{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1rem;margin-top:.4rem}}
+.edit{{padding:.2rem .7rem;font-size:.82rem}}
+.ed{{margin:.5rem 0 0;display:grid;gap:.5rem}}
+.ed-row{{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}}
+.ed-t{{width:100%;font:inherit;padding:.5rem .6rem;border:1px solid var(--line);border-radius:6px;resize:vertical}}
+.ed-v{{font-size:.88rem;padding:.3rem .8rem}}.ed-v[aria-pressed=true]{{background:var(--ink);border-color:var(--ink);color:#fff}}
+.ed-s{{background:var(--ink);color:#fff;border-color:var(--ink)}}.ed-s:hover{{background:var(--accent);border-color:var(--accent)}}
+.ed-m{{font-size:.85rem;color:var(--dis)}}
 .empty{{color:var(--ink-2);padding:2rem 0}}
 .help{{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:.8rem 1rem;margin:0 0 1.4rem;font-size:.93rem;color:var(--ink-2)}}.help b{{color:var(--ink)}}
 .dec{{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .5rem;margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--line);font-size:.88rem}}
