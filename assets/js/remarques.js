@@ -6,7 +6,33 @@
   var ENDPOINT = cfg.endpoint;
   var ICON = { like: '👍', dislike: '👎', note: '💬' };
   var VERB = { like: 'J’aime', dislike: 'Je n’aime pas', note: 'Remarque' };
-  var all = [], state = { version: '', verdict: '', auteur: '', q: '' };
+  var all = [], dec = {}, state = { version: '', verdict: '', auteur: '', decision: '', q: '' };
+  var DEC = { garder: '✓ On garde', ecarter: '✗ On écarte' };
+  function myName() { try { return (JSON.parse(localStorage.getItem(KEY)) || {}).name || ''; } catch (e) { return ''; } }
+  function decOf(c) { return (dec[c.id] && dec[c.id].texte) || ''; }
+  /* Une décision est une ligne du recueil (verdict « decision ») qui vise une remarque : id « choix-<id de la remarque> ». */
+  function split(items) {
+    dec = {}; all = [];
+    items.forEach(function (c) { if (c.verdict === 'decision') dec[c.element] = c; else all.push(c); });
+  }
+  function post(op) {
+    return fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(op) })
+      .then(function (r) { return r.json(); }).then(function (d) { if (!d || !d.ok) throw new Error(); });
+  }
+  function decide(c, val) {
+    var id = 'choix-' + c.id, now = new Date().toISOString();
+    var exists = !!dec[c.id];
+    dec[c.id] = { id: id, element: c.id, verdict: 'decision', texte: val, auteur: myName(), date: now };
+    render();
+    if (!ENDPOINT) return;
+    $('#status').textContent = 'Enregistrement…';
+    var add = { op: 'add', item: { id: id, date: now, auteur: myName(), version: c.version, page: c.page, element: c.id,
+      extrait: (c.texte || c.extrait || '').slice(0, 120), verdict: 'decision', texte: val } };
+    (exists ? Promise.resolve() : post(add))
+      .then(function () { return post({ op: 'update', id: id, verdict: 'decision', texte: val }); })
+      .then(function () { $('#status').textContent = 'Choix enregistré à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ' : tous les frères le voient.'; })
+      .catch(function () { $('#status').textContent = 'Le choix n’a pas pu être enregistré. Vérifiez la connexion, puis recommencez.'; });
+  }
   var $ = function (s) { return document.querySelector(s); };
 
   function h(tag, attrs, kids) {
@@ -36,7 +62,7 @@
   function load() {
     $('#status').textContent = 'Chargement…';
     if (!ENDPOINT) {
-      try { var S = JSON.parse(localStorage.getItem(KEY)) || {}; all = (S.items || []).concat(S.imported || []); } catch (e) { all = []; }
+      try { var S = JSON.parse(localStorage.getItem(KEY)) || {}; split((S.items || []).concat(S.imported || [])); } catch (e) { all = []; }
       $('#status').textContent = 'Le recueil en ligne n’est pas encore branché : seules les remarques laissées sur cet appareil apparaissent.';
       render(); return;
     }
@@ -44,7 +70,7 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d || !d.ok) throw new Error();
-        all = d.items;
+        split(d.items);
         $('#status').textContent = 'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + '.';
         render();
       })
@@ -56,6 +82,7 @@
     return all.filter(function (c) {
       return (!state.version || c.version === state.version) && (!state.verdict || c.verdict === state.verdict) &&
         (!state.auteur || c.auteur === state.auteur) &&
+        (!state.decision || (state.decision === 'atrancher' ? !decOf(c) : decOf(c) === state.decision)) &&
         (!q || [c.texte, c.extrait, c.element, c.auteur].join(' ').toLowerCase().indexOf(q) >= 0);
     });
   }
@@ -84,10 +111,13 @@
           h('th', { scope: 'row' }, [L.length ? h('a', { href: '#v-' + v, text: vname(v) }) : vname(v)]),
           h('td', { text: String(c.like) }), h('td', { text: String(c.dislike) }), h('td', { text: String(c.note) }),
           h('td', { text: String(L.length) }),
+          h('td', { text: String(L.filter(function (x) { return decOf(x) === 'garder'; }).length) }),
+          h('td', { text: String(L.filter(function (x) { return decOf(x) === 'ecarter'; }).length) }),
+          h('td', { text: String(L.filter(function (x) { return !decOf(x); }).length) }),
           h('td', { text: Array.from(new Set(L.map(function (x) { return x.auteur; }))).join(', ') })
         ]));
       });
-      sum.appendChild(h('table', {}, [h('thead', {}, [h('tr', {}, [h('th', { text: 'Version' }), h('th', { text: '👍' }), h('th', { text: '👎' }), h('th', { text: '💬' }), h('th', { text: 'Total' }), h('th', { text: 'Frères' })])]), tb]));
+      sum.appendChild(h('table', {}, [h('thead', {}, [h('tr', {}, [h('th', { text: 'Version' }), h('th', { text: '👍' }), h('th', { text: '👎' }), h('th', { text: '💬' }), h('th', { text: 'Total' }), h('th', { text: '✓ Gardées' }), h('th', { text: '✗ Écartées' }), h('th', { text: 'À trancher' }), h('th', { text: 'Frères' })])]), tb]));
     }
 
     // détail : version > page > remarques
@@ -105,7 +135,11 @@
         sec.appendChild(h('h3', {}, [h('a', { href: href, target: '_blank', rel: 'noopener', text: pname(p) }), tally(byP[p])]));
         var ol = h('ol', { class: 'items' });
         byP[p].sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); }).forEach(function (c) {
-          ol.appendChild(h('li', { class: 'it ' + c.verdict }, [
+          var d = decOf(c);
+          var choice = h('div', { class: 'dec' }, [h('span', { class: 'dec-l', text: 'Pour la V3 :' })].concat(['garder', 'ecarter'].map(function (v) {
+            return h('button', { type: 'button', class: 'dec-b ' + v, 'aria-pressed': String(d === v), onclick: function () { decide(c, d === v ? '' : v); }, text: DEC[v] });
+          })).concat([h('span', { class: 'dec-s', text: d ? '' : 'à trancher' })]));
+          ol.appendChild(h('li', { class: 'it ' + c.verdict + (d ? ' d-' + d : '') }, [
             h('div', { class: 'ih' }, [
               h('span', { class: 'verdict', text: (ICON[c.verdict] || '') + ' ' + (VERB[c.verdict] || '') }),
               h('span', { class: 'who', text: c.auteur || 'anonyme' }),
@@ -113,7 +147,8 @@
             ]),
             h('div', { class: 'el', text: c.element + (c.extrait ? ' — « ' + c.extrait + ' »' : '') }),
             c.texte ? h('p', { class: 'txt', text: c.texte }) : null,
-            h('a', { class: 'see', href: href + '#rv=' + c.id, target: '_blank', rel: 'noopener', text: 'Voir sur la page →' })
+            h('a', { class: 'see', href: href + '#rv=' + c.id, target: '_blank', rel: 'noopener', text: 'Voir sur la page →' }),
+            choice
           ]));
         });
         sec.appendChild(ol);
@@ -123,10 +158,10 @@
   }
 
   function csv() {
-    var cols = ['version', 'page', 'element', 'extrait', 'verdict', 'texte', 'auteur', 'date', 'ecran'];
+    var cols = ['version', 'page', 'element', 'extrait', 'verdict', 'texte', 'auteur', 'date', 'ecran', 'decision'];
     var esc = function (v) { v = v == null ? '' : String(v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     var rows = [cols.join(';')].concat(filtered().map(function (c) {
-      return cols.map(function (k) { return esc(k === 'version' ? vname(c.version) : k === 'page' ? pname(c.page) : k === 'verdict' ? VERB[c.verdict] : c[k]); }).join(';');
+      return cols.map(function (k) { return esc(k === 'version' ? vname(c.version) : k === 'page' ? pname(c.page) : k === 'verdict' ? VERB[c.verdict] : k === 'decision' ? (decOf(c) === 'garder' ? 'On garde' : decOf(c) === 'ecarter' ? 'On écarte' : 'À trancher') : c[k]); }).join(';');
     }));
     var url = URL.createObjectURL(new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
     var a = h('a', { href: url, download: 'remarques-sept-fons.csv' }); document.body.appendChild(a); a.click(); a.remove();
@@ -136,6 +171,7 @@
   $('#f-version').addEventListener('change', function (e) { state.version = e.target.value; render(); });
   $('#f-verdict').addEventListener('change', function (e) { state.verdict = e.target.value; render(); });
   $('#f-auteur').addEventListener('change', function (e) { state.auteur = e.target.value; render(); });
+  $('#f-decision').addEventListener('change', function (e) { state.decision = e.target.value; render(); });
   $('#f-q').addEventListener('input', function (e) { state.q = e.target.value.trim(); render(); });
   $('#refresh').addEventListener('click', load);
   $('#csv').addEventListener('click', csv);

@@ -57,6 +57,7 @@
         S.queue.forEach(function (op) { if (op.op === 'delete') pendingDel[op.id] = 1; });
         var others = [];
         d.items.forEach(function (c) {
+          if (c.verdict === 'decision') return;   // décisions « on garde / on écarte » : seulement sur la page des remarques
           if (mine[c.id] || pendingDel[c.id]) return;
           if (S.name && c.auteur === S.name) { S.items.push(c); return; }   // ses remarques laissées sur un autre appareil
           c.imported = true; others.push(c);

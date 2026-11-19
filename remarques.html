@@ -34,21 +34,30 @@ input{flex:1 1 12rem}
 .txt{margin:.45rem 0 0;white-space:pre-wrap}
 .see{display:inline-block;margin-top:.4rem;font-size:.85rem;color:var(--accent)}
 .empty{color:var(--ink-2);padding:2rem 0}
+.help{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:.8rem 1rem;margin:0 0 1.4rem;font-size:.93rem;color:var(--ink-2)}.help b{color:var(--ink)}
+.dec{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .5rem;margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--line);font-size:.88rem}
+.dec-l{color:var(--ink-2)}.dec-s{color:var(--ink-2);font-style:italic}
+.dec-b{padding:.3rem .8rem;font-size:.88rem}
+.dec-b.garder[aria-pressed=true]{background:var(--like);border-color:var(--like);color:#fff}
+.dec-b.ecarter[aria-pressed=true]{background:var(--dis);border-color:var(--dis);color:#fff}
+.it.d-garder{background:#f3f9f5}.it.d-ecarter{background:#f7f3f2;opacity:.75}
 </style></head><body>
 <div class="wrap">
 <a class="back" href="index.html">← Les versions du site</a>
 <h1>Toutes les remarques</h1>
 <div class="meta"><span id="status">Chargement…</span><button type="button" id="refresh">Actualiser</button><button type="button" id="csv">Exporter vers un tableur</button></div>
+<p class="help">Pour préparer la version suivante, faites le point ensemble : sous chaque remarque, choisissez <b>✓ On garde</b> ou <b>✗ On écarte</b>. Le choix s’enregistre aussitôt et tous les frères le voient ; un second clic l’annule. Seules les remarques gardées seront prises en compte.</p>
 <div class="summary-wrap" id="summary"></div>
 <div class="filters" role="search">
 <select id="f-version" aria-label="Version"></select>
 <select id="f-verdict" aria-label="Avis"><option value="">Tous les avis</option><option value="like">👍 J’aime</option><option value="dislike">👎 Je n’aime pas</option><option value="note">💬 Remarque seule</option></select>
 <select id="f-auteur" aria-label="Frère"></select>
+<select id="f-decision" aria-label="Pour la V3"><option value="">Pour la V3 : tout</option><option value="atrancher">À trancher</option><option value="garder">✓ On garde</option><option value="ecarter">✗ On écarte</option></select>
 <input id="f-q" type="search" placeholder="Rechercher dans les remarques" aria-label="Rechercher">
 <span id="count"></span>
 </div>
 <div id="list"></div>
 </div>
 <script type="application/json" id="rv-config">{"endpoint": "https://script.google.com/macros/s/AKfycbyyz0rJNnj8nXJaCfWtXvzXwDhnYf72NvwK5JnJURjYThUWoz17hJ59n1WgfeZoBYOn/exec", "order": ["choix", "maquette-des-freres-v2", "1-maquette-des-freres", "2-sept-fons", "3-noir-et-blanc", "4-nocturne", "5-matines", "6-terre", "7-ivoire", "8-silence"], "versions": {"maquette-des-freres-v2": "Notre proposition · La maquette des frères — V2", "1-maquette-des-freres": "Version 1 · La maquette des frères", "2-sept-fons": "Version 2 · Sept-Fons", "3-noir-et-blanc": "Version 3 · Noir et blanc", "4-nocturne": "Version 4 · Nocturne", "5-matines": "Version 5 · Matines", "6-terre": "Version 6 · Terre", "7-ivoire": "Version 7 · Ivoire", "8-silence": "Version 8 · Silence"}, "pages": {"index.html": "Accueil", "index-en.html": "Accueil (anglais)", "ecrire.html": "Nous écrire", "vie-monastique.html": "Quel est l’homme qui veut la vie ?", "vie-fraternelle.html": "Chercher Dieu avec des frères", "vocation.html": "Comment savoir si Dieu m’appelle ?", "priere.html": "Prier toujours", "travail.html": "Travail monastique", "horaires.html": "Horaires des offices religieux", "hotellerie.html": "Hôtellerie", "histoire.html": "Histoire de l’Abbaye", "martyrs.html": "La croix de nos martyrs", "filiation.html": "Filiation", "ocso.html": "Ordre Cistercien de la Stricte Observance (OCSO)", "contact.html": "Contacts", "don.html": "Faire un don", "cd.html": "Possibilités et mélodies", "photos.html": "L’abbaye en images"}, "pageOrder": ["index.html", "vie-monastique.html", "vie-fraternelle.html", "vocation.html", "priere.html", "travail.html", "horaires.html", "hotellerie.html", "histoire.html", "martyrs.html", "filiation.html", "ocso.html", "contact.html", "don.html", "cd.html", "photos.html", "ecrire.html", "index-en.html"]}</script>
-<script src="assets/js/remarques.js?v=202611191009" defer></script>
+<script src="assets/js/remarques.js?v=202611191020" defer></script>
 </body></html>

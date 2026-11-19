@@ -857,16 +857,25 @@ input{{flex:1 1 12rem}}
 .txt{{margin:.45rem 0 0;white-space:pre-wrap}}
 .see{{display:inline-block;margin-top:.4rem;font-size:.85rem;color:var(--accent)}}
 .empty{{color:var(--ink-2);padding:2rem 0}}
+.help{{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:.8rem 1rem;margin:0 0 1.4rem;font-size:.93rem;color:var(--ink-2)}}.help b{{color:var(--ink)}}
+.dec{{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .5rem;margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--line);font-size:.88rem}}
+.dec-l{{color:var(--ink-2)}}.dec-s{{color:var(--ink-2);font-style:italic}}
+.dec-b{{padding:.3rem .8rem;font-size:.88rem}}
+.dec-b.garder[aria-pressed=true]{{background:var(--like);border-color:var(--like);color:#fff}}
+.dec-b.ecarter[aria-pressed=true]{{background:var(--dis);border-color:var(--dis);color:#fff}}
+.it.d-garder{{background:#f3f9f5}}.it.d-ecarter{{background:#f7f3f2;opacity:.75}}
 </style></head><body>
 <div class="wrap">
 <a class="back" href="index.html">← Les versions du site</a>
 <h1>Toutes les remarques</h1>
 <div class="meta"><span id="status">Chargement…</span><button type="button" id="refresh">Actualiser</button><button type="button" id="csv">Exporter vers un tableur</button></div>
+<p class="help">Pour préparer la version suivante, faites le point ensemble : sous chaque remarque, choisissez <b>✓ On garde</b> ou <b>✗ On écarte</b>. Le choix s’enregistre aussitôt et tous les frères le voient ; un second clic l’annule. Seules les remarques gardées seront prises en compte.</p>
 <div class="summary-wrap" id="summary"></div>
 <div class="filters" role="search">
 <select id="f-version" aria-label="Version"></select>
 <select id="f-verdict" aria-label="Avis"><option value="">Tous les avis</option><option value="like">👍 J’aime</option><option value="dislike">👎 Je n’aime pas</option><option value="note">💬 Remarque seule</option></select>
 <select id="f-auteur" aria-label="Frère"></select>
+<select id="f-decision" aria-label="Pour la V3"><option value="">Pour la V3 : tout</option><option value="atrancher">À trancher</option><option value="garder">✓ On garde</option><option value="ecarter">✗ On écarte</option></select>
 <input id="f-q" type="search" placeholder="Rechercher dans les remarques" aria-label="Rechercher">
 <span id="count"></span>
 </div>
