@@ -531,32 +531,42 @@ V2 = dict(folder="maquette-des-freres-v2", name="La maquette des frères — V2"
           fonts=THEMES[0]["fonts"], cls="maquette v2",
           desc="La maquette des frères, gardée telle quelle, avec un menu plus calme : les quatre rubriques essentielles, "
                "puis « Menu » pour tout le reste du site et « Nous écrire ».")
-V2_MORE = [   # menu volontairement court : trois rubriques de trois ou quatre liens
+V2_MORE = [   # menu volontairement court ; un lien peut porter des sous-liens (3e élément)
+    ("L’abbaye", [
+        ("Histoire de l’Abbaye", "histoire.html", [
+            ("La croix de nos martyrs", "martyrs.html"),
+            ("L’Ordre cistercien", "ocso.html"),
+            ("Nos maisons-filles", "filiation.html"),
+        ]),
+    ]),
     ("Venir à Sept-Fons", [
         ("Horaires des offices", "horaires.html"),
         ("Hôtellerie", "hotellerie.html"),
+        ("Horaires du magasin", "horaires.html#magasin"),
         ("Contacts et accès", "contact.html"),
     ]),
-    ("L’abbaye", [
-        ("L’abbaye en images", "photos.html"),
-        ("Histoire de l’Abbaye", "histoire.html"),
-        ("La croix de nos martyrs", "martyrs.html"),
-        ("Nos maisons-filles", "filiation.html"),
-    ]),
-    ("À lire, à écouter", [
+    ("Actualités", [
         ("SOURCE – Le Magazine", SOURCE_URL),
         ("Homélies", OLD + "/homelies/"),
         ("Album « Possibilités et mélodies »", "cd.html"),
+        ("L’abbaye en images", "photos.html"),
     ]),
 ]
 V2_MORE_EN = [
+    ("The abbey", [("History of the Abbey", "histoire.html", [
+        ("The cross of our martyrs", "martyrs.html"), ("The Cistercian Order", "ocso.html"), ("Daughter houses", "filiation.html")])]),
     ("Visiting Sept-Fons", [("Times of the Offices", "horaires.html"), ("Guesthouse", "hotellerie.html"),
-                            ("Contacts and directions", "contact.html")]),
-    ("The abbey", [("History of the Abbey", "histoire.html"), ("The cross of our martyrs", "martyrs.html"),
-                   ("Daughter houses", "filiation.html")]),
-    ("Read and listen", [("SOURCE – The Magazine", SOURCE_URL), ("Homilies", OLD + "/homelies/"),
-                         ("Album “Possibilités et mélodies”", "cd.html")]),
+                            ("Shop opening hours", "horaires.html#magasin"), ("Contacts and directions", "contact.html")]),
+    ("News", [("SOURCE – The Magazine", SOURCE_URL), ("Homilies", OLD + "/homelies/"),
+              ("Album “Possibilités et mélodies”", "cd.html"), ("The abbey in pictures", "photos.html")]),
 ]
+
+
+def v2_link(e):
+    l, h = e[0], e[1]
+    sub = e[2] if len(e) > 2 else []
+    subs = ('<ul class="drawer-sub">' + "".join(f'<li><a href="{sh}"{ext(sh)}>{inl(sl)}</a></li>' for sl, sh in sub) + "</ul>") if sub else ""
+    return f'<li><a href="{h}"{ext(h)}>{inl(l)}</a>{subs}</li>'
 
 
 def v2_header(current, lang):
@@ -576,7 +586,7 @@ def v2_header(current, lang):
             items.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
             main_groups.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
     cols = "".join(f'<div class="drawer-group"><p class="drawer-title">{inl(g)}</p><ul>' +
-                   "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in links) + "</ul></div>"
+                   "".join(v2_link(e) for e in links) + "</ul></div>"
                    for g, links in groups)
     close = "Close" if L else "Fermer"
     actions = (f'<div class="drawer-actions"><a class="v2-write" href="{cta_h}">{inl(cta_l)}</a>'
@@ -749,7 +759,7 @@ def chooser():
             f'<p>{html.escape(V2["desc"])}</p>'
             f'<ul class="feat-list"><li>Le texte, les photos et la mise en page de la maquette des frères</li>'
             f'<li>Quatre rubriques au centre de la page : Chercher Dieu · Prier et vivre chaque jour · Avec des frères · Une vocation ?</li>'
-            f'<li>À droite, « Menu » : Nous écrire, Boutique et Faire un don d’emblée, puis trois rubriques courtes (venir à Sept-Fons, l’abbaye, à lire et à écouter)</li></ul>'
+            f'<li>À droite, « Menu » : Nous écrire, Boutique et Faire un don d’emblée, puis trois rubriques courtes : l’abbaye, venir à Sept-Fons, actualités</li></ul>'
             f'<span class="go">Ouvrir la proposition →</span></div></a>')
     s = f"""<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
