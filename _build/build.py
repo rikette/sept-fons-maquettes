@@ -531,30 +531,31 @@ V2 = dict(folder="maquette-des-freres-v2", name="La maquette des frères — V2"
           fonts=THEMES[0]["fonts"], cls="maquette v2",
           desc="La maquette des frères, gardée telle quelle, avec un menu plus calme : les quatre rubriques essentielles, "
                "puis « Menu » pour tout le reste du site et « Nous écrire ».")
-V2_MORE = [
+V2_MORE = [   # menu volontairement court : trois rubriques de trois ou quatre liens
     ("Venir à Sept-Fons", [
-        ("Horaires des offices religieux", "horaires.html"),
+        ("Horaires des offices", "horaires.html"),
         ("Hôtellerie", "hotellerie.html"),
-        ("Visitez notre magasin", "horaires.html#magasin"),
-        ("Contacts", "contact.html"),
+        ("Contacts et accès", "contact.html"),
     ]),
     ("L’abbaye", [
         ("L’abbaye en images", "photos.html"),
         ("Histoire de l’Abbaye", "histoire.html"),
         ("La croix de nos martyrs", "martyrs.html"),
-        ("Filiation", "filiation.html"),
-        ("Ordre Cistercien de la Stricte Observance", "ocso.html"),
+        ("Nos maisons-filles", "filiation.html"),
     ]),
     ("À lire, à écouter", [
         ("SOURCE – Le Magazine", SOURCE_URL),
         ("Homélies", OLD + "/homelies/"),
-        ("Actualités", OLD + "/category/actualite-abbaye-sept-fons/"),
         ("Album « Possibilités et mélodies »", "cd.html"),
     ]),
-    ("Soutenir l’abbaye", [
-        ("Boutique en ligne", SHOP_URL),
-        ("Faire un don", "don.html"),
-    ]),
+]
+V2_MORE_EN = [
+    ("Visiting Sept-Fons", [("Times of the Offices", "horaires.html"), ("Guesthouse", "hotellerie.html"),
+                            ("Contacts and directions", "contact.html")]),
+    ("The abbey", [("History of the Abbey", "histoire.html"), ("The cross of our martyrs", "martyrs.html"),
+                   ("Daughter houses", "filiation.html")]),
+    ("Read and listen", [("SOURCE – The Magazine", SOURCE_URL), ("Homilies", OLD + "/homelies/"),
+                         ("Album “Possibilités et mélodies”", "cd.html")]),
 ]
 
 
@@ -562,34 +563,39 @@ def v2_header(current, lang):
     L = lang == "en"
     nav = EN.NAV_EN if L else NAV
     cta_l, cta_h = EN.CTA_EN if L else CTA
-    groups = EN.MORE_EN if L else V2_MORE
-    items, main_links = [], []
+    groups = V2_MORE_EN if L else V2_MORE
+    shop_l, don_l = ("Online shop", "Donate") if L else ("Boutique", "Faire un don")
+    items, main_groups = [], []
     for label, href, sub in nav:
         cur = ' aria-current="page"' if current == label else ""
         if sub:
             subs = "".join(f'<li><a href="{h}">{inl(l)}</a></li>' for l, h in sub)
             items.append(f'<li class="has-sub"><a href="{href}"{cur}>{inl(label)}</a><ul class="sub">{subs}</ul></li>')
+            main_groups.append(f'<li><a href="{href}"{cur}>{inl(label)}</a><ul class="drawer-sub">{subs}</ul></li>')
         else:
             items.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
-        main_links.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
-    menu = "Menu"
-    items.append(f'<li class="v2-menu-li"><button class="v2-menu" type="button" aria-expanded="false" aria-controls="drawer" data-drawer>'
-                 f'<span class="bars" aria-hidden="true"></span><span>{menu}</span></button></li>')
+            main_groups.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
     cols = "".join(f'<div class="drawer-group"><p class="drawer-title">{inl(g)}</p><ul>' +
                    "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in links) + "</ul></div>"
                    for g, links in groups)
     close = "Close" if L else "Fermer"
+    actions = (f'<div class="drawer-actions"><a class="v2-write" href="{cta_h}">{inl(cta_l)}</a>'
+               f'<a class="v2-act" href="{SHOP_URL}" target="_blank" rel="noopener">{shop_l}</a>'
+               f'<a class="v2-act" href="don.html">{don_l}</a></div>')
     drawer = (f'<div class="drawer" id="drawer" hidden data-drawer-panel><div class="drawer-backdrop" data-drawer-close></div>'
               f'<aside class="drawer-panel" aria-label="Menu"><button class="drawer-close" type="button" data-drawer-close aria-label="{close}">×</button>'
-              f'<p class="drawer-cta"><a class="v2-write" href="{cta_h}">{inl(cta_l)}</a></p>'
-              f'<div class="drawer-group drawer-main"><ul>{"".join(main_links)}</ul></div>{cols}</aside></div>')
+              f'{actions}<div class="drawer-group drawer-main"><ul>{"".join(main_groups)}</ul></div>'
+              f'<div class="drawer-cols">{cols}</div></aside></div>')
     return f"""<header class="site-header" data-header>
   <div class="h-inner">
     <a class="brand" href="{'index-en.html' if L else 'index.html'}">Abbaye de Sept-Fons</a>
     <nav class="main-nav" aria-label="{'Main navigation' if L else 'Navigation principale'}">
       <ul>{"".join(items)}</ul>
     </nav>
-    {lang_switch(lang)}
+    <div class="h-end">
+      <button class="v2-menu" type="button" aria-expanded="false" aria-controls="drawer" data-drawer><span class="bars" aria-hidden="true"></span><span>Menu</span></button>
+      {lang_switch(lang)}
+    </div>
   </div>
 </header>
 {drawer}"""
@@ -742,8 +748,8 @@ def chooser():
             f'<div class="feat-body"><span class="n">Notre proposition</span><h2>{V2["name"]}</h2>'
             f'<p>{html.escape(V2["desc"])}</p>'
             f'<ul class="feat-list"><li>Le texte, les photos et la mise en page de la maquette des frères</li>'
-            f'<li>Quatre rubriques en haut de page : Chercher Dieu · Prier et vivre chaque jour · Avec des frères · Une vocation ?</li>'
-            f'<li>Juste à droite, « Menu » : venir à Sept-Fons, l’abbaye, à lire et à écouter, soutenir l’abbaye, et « Nous écrire »</li></ul>'
+            f'<li>Quatre rubriques au centre de la page : Chercher Dieu · Prier et vivre chaque jour · Avec des frères · Une vocation ?</li>'
+            f'<li>À droite, « Menu » : Nous écrire, Boutique et Faire un don d’emblée, puis trois rubriques courtes (venir à Sept-Fons, l’abbaye, à lire et à écouter)</li></ul>'
             f'<span class="go">Ouvrir la proposition →</span></div></a>')
     s = f"""<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
