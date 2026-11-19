@@ -532,18 +532,18 @@ V2 = dict(folder="maquette-des-freres-v2", name="La maquette des frères — V2"
           desc="La maquette des frères, gardée telle quelle, avec un menu plus calme : les quatre rubriques essentielles, "
                "puis « Menu » pour tout le reste du site et « Nous écrire ».")
 V2_MORE = [   # menu volontairement court ; un lien peut porter des sous-liens (3e élément)
+    ("Venir à Sept-Fons", [
+        ("Horaires des offices", "horaires.html"),
+        ("Hôtellerie", "hotellerie.html"),
+        ("Horaires du magasin", "horaires.html#magasin"),
+        ("Contacts et accès", "contact.html"),
+    ]),
     ("L’abbaye", [
         ("Histoire de l’Abbaye", "histoire.html", [
             ("La croix de nos martyrs", "martyrs.html"),
             ("L’Ordre cistercien", "ocso.html"),
             ("Nos maisons-filles", "filiation.html"),
         ]),
-    ]),
-    ("Venir à Sept-Fons", [
-        ("Horaires des offices", "horaires.html"),
-        ("Hôtellerie", "hotellerie.html"),
-        ("Horaires du magasin", "horaires.html#magasin"),
-        ("Contacts et accès", "contact.html"),
     ]),
     ("Actualités", [
         ("SOURCE – Le Magazine", SOURCE_URL),
@@ -553,10 +553,10 @@ V2_MORE = [   # menu volontairement court ; un lien peut porter des sous-liens (
     ]),
 ]
 V2_MORE_EN = [
-    ("The abbey", [("History of the Abbey", "histoire.html", [
-        ("The cross of our martyrs", "martyrs.html"), ("The Cistercian Order", "ocso.html"), ("Daughter houses", "filiation.html")])]),
     ("Visiting Sept-Fons", [("Times of the Offices", "horaires.html"), ("Guesthouse", "hotellerie.html"),
                             ("Shop opening hours", "horaires.html#magasin"), ("Contacts and directions", "contact.html")]),
+    ("The abbey", [("History of the Abbey", "histoire.html", [
+        ("The cross of our martyrs", "martyrs.html"), ("The Cistercian Order", "ocso.html"), ("Daughter houses", "filiation.html")])]),
     ("News", [("SOURCE – The Magazine", SOURCE_URL), ("Homilies", OLD + "/homelies/"),
               ("Album “Possibilités et mélodies”", "cd.html"), ("The abbey in pictures", "photos.html")]),
 ]
@@ -759,7 +759,7 @@ def chooser():
             f'<p>{html.escape(V2["desc"])}</p>'
             f'<ul class="feat-list"><li>Le texte, les photos et la mise en page de la maquette des frères</li>'
             f'<li>Quatre rubriques au centre de la page : Chercher Dieu · Prier et vivre chaque jour · Avec des frères · Une vocation ?</li>'
-            f'<li>À droite, « Menu » : Nous écrire, Boutique et Faire un don d’emblée, puis trois rubriques courtes : l’abbaye, venir à Sept-Fons, actualités</li></ul>'
+            f'<li>À droite, « Menu » : Nous écrire, Boutique et Faire un don d’emblée, puis trois rubriques courtes : venir à Sept-Fons, l’abbaye, actualités</li></ul>'
             f'<span class="go">Ouvrir la proposition →</span></div></a>')
     s = f"""<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
