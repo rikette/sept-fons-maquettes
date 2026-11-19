@@ -14,12 +14,12 @@
   var file = parts[parts.length - 1] || 'index.html';
   if (!/\.html?$/.test(file)) { parts.push('index.html'); file = 'index.html'; }
   var folder = parts[parts.length - 2] || '';
-  var inVersion = /^\d+-/.test(folder);
+  var inVersion = /^\d+-|^maquette-des-freres-v2$/.test(folder);
   var VERSION = inVersion ? folder : 'choix';
   var PAGE = file;
   var HERE = inVersion ? folder + '/' + file : file;   // chemin depuis la racine du dossier envoyé
   var ROOT = inVersion ? '../' : '';
-  var VLABEL = function (v) { return v === 'choix' ? 'Page de choix' : 'Version ' + v.replace(/^(\d+)-(.*)$/, function (m, n, s) { return n + ' · ' + s.replace(/-/g, ' '); }); };
+  var VLABEL = function (v) { return v === 'choix' ? 'Page de choix' : v === 'maquette-des-freres-v2' ? 'Notre proposition · Maquette des frères V2' : 'Version ' + v.replace(/^(\d+)-(.*)$/, function (m, n, s) { return n + ' · ' + s.replace(/-/g, ' '); }); };
 
   /* ---------- stockage ---------- */
   var storeOk = true, S;

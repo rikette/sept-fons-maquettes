@@ -525,6 +525,76 @@ def mq_header(current, lang):
 </header>"""
 
 
+# ------------------------------------------------------------------ VERSION 1 bis — maquette des frères V2 (notre proposition)
+# Les quatre rubriques des consignes, puis « Menu » juste à droite d'« Une vocation ? » : tout le reste du site et « Nous écrire ».
+V2 = dict(folder="maquette-des-freres-v2", name="La maquette des frères — V2", menu="v2", tagline=False, color="#f7f4ee",
+          fonts=THEMES[0]["fonts"], cls="maquette v2",
+          desc="La maquette des frères, gardée telle quelle, avec un menu plus calme : les quatre rubriques essentielles, "
+               "puis « Menu » pour tout le reste du site et « Nous écrire ».")
+V2_MORE = [
+    ("Venir à Sept-Fons", [
+        ("Horaires des offices religieux", "horaires.html"),
+        ("Hôtellerie", "hotellerie.html"),
+        ("Visitez notre magasin", "horaires.html#magasin"),
+        ("Contacts", "contact.html"),
+    ]),
+    ("L’abbaye", [
+        ("L’abbaye en images", "photos.html"),
+        ("Histoire de l’Abbaye", "histoire.html"),
+        ("La croix de nos martyrs", "martyrs.html"),
+        ("Filiation", "filiation.html"),
+        ("Ordre Cistercien de la Stricte Observance", "ocso.html"),
+    ]),
+    ("À lire, à écouter", [
+        ("SOURCE – Le Magazine", SOURCE_URL),
+        ("Homélies", OLD + "/homelies/"),
+        ("Actualités", OLD + "/category/actualite-abbaye-sept-fons/"),
+        ("Album « Possibilités et mélodies »", "cd.html"),
+    ]),
+    ("Soutenir l’abbaye", [
+        ("Boutique en ligne", SHOP_URL),
+        ("Faire un don", "don.html"),
+    ]),
+]
+
+
+def v2_header(current, lang):
+    L = lang == "en"
+    nav = EN.NAV_EN if L else NAV
+    cta_l, cta_h = EN.CTA_EN if L else CTA
+    groups = EN.MORE_EN if L else V2_MORE
+    items, main_links = [], []
+    for label, href, sub in nav:
+        cur = ' aria-current="page"' if current == label else ""
+        if sub:
+            subs = "".join(f'<li><a href="{h}">{inl(l)}</a></li>' for l, h in sub)
+            items.append(f'<li class="has-sub"><a href="{href}"{cur}>{inl(label)}</a><ul class="sub">{subs}</ul></li>')
+        else:
+            items.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
+        main_links.append(f'<li><a href="{href}"{cur}>{inl(label)}</a></li>')
+    menu = "Menu"
+    items.append(f'<li class="v2-menu-li"><button class="v2-menu" type="button" aria-expanded="false" aria-controls="drawer" data-drawer>'
+                 f'<span class="bars" aria-hidden="true"></span><span>{menu}</span></button></li>')
+    cols = "".join(f'<div class="drawer-group"><p class="drawer-title">{inl(g)}</p><ul>' +
+                   "".join(f'<li><a href="{h}"{ext(h)}>{inl(l)}</a></li>' for l, h in links) + "</ul></div>"
+                   for g, links in groups)
+    close = "Close" if L else "Fermer"
+    drawer = (f'<div class="drawer" id="drawer" hidden data-drawer-panel><div class="drawer-backdrop" data-drawer-close></div>'
+              f'<aside class="drawer-panel" aria-label="Menu"><button class="drawer-close" type="button" data-drawer-close aria-label="{close}">×</button>'
+              f'<p class="drawer-cta"><a class="v2-write" href="{cta_h}">{inl(cta_l)}</a></p>'
+              f'<div class="drawer-group drawer-main"><ul>{"".join(main_links)}</ul></div>{cols}</aside></div>')
+    return f"""<header class="site-header" data-header>
+  <div class="h-inner">
+    <a class="brand" href="{'index-en.html' if L else 'index.html'}">Abbaye de Sept-Fons</a>
+    <nav class="main-nav" aria-label="{'Main navigation' if L else 'Navigation principale'}">
+      <ul>{"".join(items)}</ul>
+    </nav>
+    {lang_switch(lang)}
+  </div>
+</header>
+{drawer}"""
+
+
 def mq_home(H, lang="fr"):
     a, f, j, vo, c = H["ami"], H["freres"], H["journee"], H["vocation"], H["contact"]
     soon = "soon" if lang == "en" else "bientôt"
@@ -590,9 +660,9 @@ def mq_shell(t, title, desc, body, current=None, body_cls="", lang="fr", extra_j
 <link rel="stylesheet" href="style.css?v={ASSET_V}">
 <script>document.documentElement.classList.add("js")</script>
 </head>
-<body class="{body_cls}">
+<body class="{'v2 ' if t['menu'] == 'v2' else ''}{body_cls}">
 <a class="skip" href="#contenu">{'Skip to content' if lang == 'en' else 'Aller au contenu'}</a>
-{mq_header(current, lang)}
+{v2_header(current, lang) if t['menu'] == 'v2' else mq_header(current, lang)}
 <main id="contenu">
 {body}
 </main>
@@ -611,14 +681,18 @@ HOME_DESC = "Abbaye cistercienne trappiste de Sept-Fons (Allier) : chercher Dieu
 def main():
     for old in ["version-1-maquette", "version-2-clarte", "version-3-nocturne", "1-nocturne"]:
         shutil.rmtree(os.path.join(ROOT, old), ignore_errors=True)
-    for t in THEMES:
+    for t in [V2] + THEMES:
         d = os.path.join(ROOT, t["folder"])
         os.makedirs(d, exist_ok=True)
         for f in os.listdir(d):
             if f.endswith(".html"):
                 os.remove(os.path.join(d, f))
         w = lambda name, s: open(os.path.join(d, name), "w", encoding="utf-8").write(s)
-        if t["menu"] == "maquette":
+        if t is V2:  # feuille de style de la version 1, plus le menu de la V2
+            base = open(os.path.join(ROOT, THEMES[0]["folder"], "style.css"), encoding="utf-8").read()
+            extra = open(os.path.join(ROOT, "_build", "v2.css"), encoding="utf-8").read()
+            w("style.css", base + "\n" + extra)
+        if t["menu"] in ("maquette", "v2"):
             sh, hm, pg = mq_shell, mq_home, mq_page
         else:
             sh, hm, pg = shell, home, page
@@ -663,9 +737,17 @@ def chooser():
         f'<a class="card" href="{t["folder"]}/index.html" target="_blank" rel="noopener"><div class="thumb" style="background-image:url(assets/img/{THUMBS[t["folder"]]}.jpg)"></div>'
         f'<div class="body"><span class="n">Version {i}</span><h2>{t["name"]}</h2><p>{html.escape(t["desc"])}</p>'
         f'<p class="m">{MENU_LABEL[t["menu"]]}</p></div></a>' for i, t in enumerate(THEMES, 1))
+    feat = (f'<a class="feat" href="{V2["folder"]}/index.html" target="_blank" rel="noopener">'
+            f'<div class="feat-img" style="background-image:url(assets/img/bro-champs.jpg)"></div>'
+            f'<div class="feat-body"><span class="n">Notre proposition</span><h2>{V2["name"]}</h2>'
+            f'<p>{html.escape(V2["desc"])}</p>'
+            f'<ul class="feat-list"><li>Le texte, les photos et la mise en page de la maquette des frères</li>'
+            f'<li>Quatre rubriques en haut de page : Chercher Dieu · Prier et vivre chaque jour · Avec des frères · Une vocation ?</li>'
+            f'<li>Juste à droite, « Menu » : venir à Sept-Fons, l’abbaye, à lire et à écouter, soutenir l’abbaye, et « Nous écrire »</li></ul>'
+            f'<span class="go">Ouvrir la proposition →</span></div></a>')
     s = f"""<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sept-Fons — huit maquettes</title><link rel="icon" href="assets/favicon.png">
+<title>Sept-Fons — maquettes du site</title><link rel="icon" href="assets/favicon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap">
 <style>
 :root{{--bg:#f5f2eb;--ink:#1f1c18;--ink-2:#655d52;--line:#ddd5c7;--accent:#8a6a3b}}
@@ -681,13 +763,29 @@ a.card:hover{{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,.08)}
 .body{{padding:1.1rem 1.3rem 1.4rem}}.n{{font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}}
 h2{{font:500 1.7rem/1.2 "Cormorant Garamond",serif;margin:.2rem 0 .4rem}}.body p{{margin:0 0 .5rem;color:var(--ink-2);font-size:.93rem}}
 .m{{font-size:.8rem!important;border-top:1px solid var(--line);padding-top:.6rem;margin-top:.8rem!important}}
+a.feat{{display:grid;grid-template-columns:1.1fr 1fr;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--ink);border-radius:6px;overflow:hidden;transition:box-shadow .25s}}
+a.feat:hover{{box-shadow:0 18px 50px rgba(0,0,0,.1)}}
+.feat-img{{min-height:22rem;background-size:cover;background-position:center}}
+.feat-body{{padding:2rem 2.2rem 2.2rem}}.feat-body h2{{font-size:2.3rem}}.feat-body p{{color:var(--ink-2);margin:0 0 .8rem}}
+.feat-list{{margin:0 0 1.2rem;padding-left:1.1rem;color:var(--ink-2);font-size:.93rem}}.feat-list li{{margin:.3rem 0}}
+.go{{display:inline-block;background:var(--ink);color:#fff;padding:.6rem 1.2rem;border-radius:999px;font-weight:500;font-size:.95rem}}
+a.feat:hover .go{{background:var(--accent)}}
+.lead-in{{color:var(--ink-2);max-width:44rem;margin:0}}
+.howto{{margin-top:2rem}}
+.block{{max-width:76rem;margin:0 auto;padding:0 1.25rem}}
+.others{{max-width:76rem;margin:3rem auto 0;padding:2.5rem 1.25rem 0;border-top:1px solid var(--line)}}.others h2{{font-size:2rem;margin:0}}.others p{{color:var(--ink-2);margin:.2rem 0 1.2rem;max-width:44rem}}
+@media (max-width:820px){{a.feat{{grid-template-columns:1fr}}.feat-img{{min-height:0;aspect-ratio:16/10}}.feat-body{{padding:1.4rem 1.3rem 1.6rem}}.feat-body h2{{font-size:1.9rem}}}}
 footer{{padding-top:2rem;padding-bottom:4rem;border-top:1px solid var(--line);color:var(--ink-2);font-size:.9rem}}footer ul{{padding-left:1.1rem}}
 </style></head><body>
-<header><h1>Abbaye de Sept-Fons — huit propositions</h1>
+<header><h1>Abbaye de Sept-Fons — le nouveau site</h1>
+<p class="lead-in">Voici la version que nous vous proposons. Les autres pistes explorées restent visibles plus bas : une couleur, une photo ou une idée peut y être reprise.</p></header>
+<div class="block">{feat}
 <div class="howto"><p class="lede">Ouvrez une version, puis donnez votre avis directement sur la page :</p>
 <ol><li>Cliquez sur <b>✎ Commenter</b>, en bas à droite.</li>
 <li>Cliquez sur l’élément de votre choix (titre, photo, menu, bouton…) : <b>👍 J’aime</b> ou <b>👎 Je n’aime pas</b>, et ajoutez une remarque si vous le souhaitez.</li>
-{HOWTO_END}</div></header>
+{HOWTO_END}</div></div>
+<section class="others"><h2>Autres pistes explorées</h2>
+<p>Huit variations sur la même base : couleurs, polices et menus différents.</p></section>
 <main>{cards}</main>
 {review_tags("")}
 </body></html>
@@ -701,8 +799,9 @@ def remarques_page():
     pages = {"index.html": "Accueil", "index-en.html": "Accueil (anglais)", "ecrire.html": "Nous écrire"}
     pages.update({k + ".html": PAGES[k]["title"] for k in PAGE_ORDER})
     cfg = {"endpoint": REVIEW_ENDPOINT,
-           "order": ["choix"] + [t["folder"] for t in THEMES],
-           "versions": {t["folder"]: f"Version {i} · {t['name']}" for i, t in enumerate(THEMES, 1)},
+           "order": ["choix", V2["folder"]] + [t["folder"] for t in THEMES],
+           "versions": {V2["folder"]: "Notre proposition · " + V2["name"],
+                        **{t["folder"]: f"Version {i} · {t['name']}" for i, t in enumerate(THEMES, 1)}},
            "pages": pages,
            "pageOrder": ["index.html"] + [k + ".html" for k in PAGE_ORDER] + ["ecrire.html", "index-en.html"]}
     cfg_json = json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")
@@ -744,7 +843,7 @@ input{{flex:1 1 12rem}}
 .empty{{color:var(--ink-2);padding:2rem 0}}
 </style></head><body>
 <div class="wrap">
-<a class="back" href="index.html">← Les huit versions</a>
+<a class="back" href="index.html">← Les versions du site</a>
 <h1>Toutes les remarques</h1>
 <div class="meta"><span id="status">Chargement…</span><button type="button" id="refresh">Actualiser</button><button type="button" id="csv">Exporter vers un tableur</button></div>
 <div class="summary-wrap" id="summary"></div>
