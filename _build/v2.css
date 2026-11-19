@@ -35,7 +35,7 @@
 .drawer-group a:hover{color:var(--accent)}
 .drawer-main{display:none}
 .drawer-main .drawer-sub a{font-family:var(--serif);font-size:1.05rem;color:var(--ink-2);padding:.15rem 0 .15rem 1rem}
-.drawer-cols .drawer-sub{list-style:none;margin:0;padding:0 0 0 1rem}  /* sous-liens : même taille et même couleur */
+.drawer-cols .drawer-sub{list-style:none;margin:0;padding:0}  /* sous-liens : même taille et même couleur */
 body.drawer-open{overflow:hidden}
 
 /* tablette et téléphone : le bouton « Menu » contient aussi les quatre rubriques, comme dans la version 1 */
