@@ -4,3 +4,4 @@ _retours/
 .claude/
 __pycache__/
 .env*
+_notes/
